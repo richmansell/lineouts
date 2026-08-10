@@ -3,7 +3,7 @@
 An animated 5-man lineout playbook. One page, no build step, no dependencies,
 works offline.
 
-**Live:** https://YOUR-USERNAME.github.io/lineout-moves/
+**Live:** https://github.com/richmansell/lineouts
 
 ## What's in it
 
