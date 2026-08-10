@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#12212f">
+<title>Lineout Moves</title>
+<style>
+  :root{
+    --ink:#12212f; --navy:#1e3a5f; --teal:#0f766e; --slate:#94a3b8;
+    --red:#dc2626; --yellow:#eab308; --black:#111827;
+    --green:#16a34a; --orange:#ea580c; --ball:#a16207;
+    --paper:#f7f8f5;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0;overscroll-behavior:none;overflow-x:hidden}
+  body{
+    background:var(--ink); color:#e8edf2; font:400 15px/1.35 ui-sans-serif,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+    display:flex; flex-direction:column;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    user-select:none; -webkit-user-select:none;
+  }
+  header{padding:8px 10px 6px;flex:0 0 auto;overflow:hidden}
+  .navrow{display:flex;align-items:center;gap:8px}
+  .nav{flex:0 0 46px;width:46px;height:46px;padding:0;border-radius:14px;background:#2b4460;
+       font:700 26px/1 inherit;color:#e8edf2}
+  .nav:active{background:#3d5f80}
+  .title{
+    flex:1 1 auto;min-width:0;display:flex;align-items:center;justify-content:center;gap:7px;
+    background:transparent;border-radius:12px;padding:5px 6px;overflow:hidden
+  }
+  .title:active{background:#1c2f43}
+  .caret{color:#8ba0b3;font-size:11px;flex:0 0 auto}
+  .callname{flex:0 1 auto}
+  .chip{flex:0 0 auto}
+  @media (max-width:412px){
+    .nav{flex:0 0 40px;width:40px;height:40px;font-size:23px}
+    .callname{font-size:16px}
+    .chip{font-size:10px;padding:3px 6px}
+    .btns{gap:5px}
+    button{font-size:9.5px;padding:12px 1px}
+    header{padding:8px 8px 5px}
+    footer{padding:6px 8px 10px}
+  }
+  @media (max-width:360px){ .callname{font-size:14px} }
+  .callname{font-size:19px;font-weight:800;letter-spacing:.01em;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chip{font-size:11px;font-weight:800;letter-spacing:.06em;padding:4px 8px;border-radius:99px;white-space:nowrap}
+  .chip.GREEN{background:var(--green);color:#04210f}
+  .chip.ORANGE{background:var(--orange);color:#2a0f02}
+  .chip.CARRY{background:#38bdf8;color:#062231}
+  .sub{font-size:12px;color:#93a4b5;margin-top:2px;min-height:16px}
+  .dots{display:flex;gap:2px;margin-top:6px;justify-content:center}
+  .dotbtn{flex:0 0 auto;width:22px;height:22px;padding:0;background:transparent;border-radius:99px;
+          display:flex;align-items:center;justify-content:center}
+  .dot{width:7px;height:7px;border-radius:99px;background:#3c5064;display:block;transition:all .18s}
+  .dotbtn.on .dot{background:#e8edf2;width:9px;height:9px}
+
+  #stagewrap{flex:1 1 auto;position:relative;min-height:0;display:flex;align-items:center;justify-content:center}
+  svg{display:block;width:100%;height:100%;touch-action:pan-y}
+
+  footer{flex:0 0 auto;padding:6px 12px 12px}
+  .phaserow{display:flex;justify-content:space-between;font-size:8.5px;color:#7f93a6;letter-spacing:.04em;margin-bottom:3px}
+  .scrub{height:26px;position:relative;display:flex;align-items:center;cursor:pointer}
+  .track{height:5px;width:100%;background:#26384a;border-radius:99px;overflow:hidden}
+  .fill{height:100%;width:0;background:#e8edf2;border-radius:99px}
+  .ticks{position:absolute;left:0;right:0;height:26px;pointer-events:none}
+  .tick{position:absolute;top:6px;width:1.5px;height:13px;background:#4a6076;border-radius:1px}
+  .btns{display:flex;gap:7px;margin-top:8px}
+  button{
+    flex:1 1 0;min-width:0;background:#22364a;color:#e8edf2;border:0;border-radius:11px;
+    padding:12px 2px;font:700 10.5px/1 inherit;letter-spacing:0;cursor:pointer;
+    white-space:nowrap;overflow:hidden;text-overflow:clip;
+  }
+  button:active{background:#2e4761}
+  button.on{background:#e8edf2;color:#12212f}
+  .notes{
+    position:absolute;left:8px;right:8px;bottom:8px;background:#0d1a26f2;border:1px solid #2a3f53;
+    border-radius:14px;padding:13px 15px;font-size:13px;line-height:1.45;color:#cfdae4;
+    transform:translateY(115%);opacity:0;pointer-events:none;
+    transition:transform .28s ease,opacity .2s ease;max-height:70%;overflow:auto
+  }
+  .notes.show{transform:none;opacity:1;pointer-events:auto}
+  .notes h4{margin:0 0 6px;font-size:12px;letter-spacing:.08em;color:#7f93a6;text-transform:uppercase}
+  .notes ul{margin:0;padding-left:17px} .notes li{margin:3px 0}
+
+  .picker{position:fixed;inset:0;background:#08121ce0;display:none;z-index:20;
+          align-items:flex-end;justify-content:center;padding:14px}
+  .picker.show{display:flex}
+  .pksheet{width:100%;max-width:520px;max-height:86%;display:flex;flex-direction:column;
+           background:#16283a;border:1px solid #2d445c;border-radius:18px;overflow:hidden}
+  .pkhead{padding:13px 16px 9px;font-size:11px;letter-spacing:.1em;color:#8ba0b3;font-weight:800}
+  .pklist{overflow:auto;-webkit-overflow-scrolling:touch}
+  .pkitem{width:100%;display:flex;align-items:center;gap:9px;background:transparent;border-radius:0;
+          padding:13px 16px;text-align:left;font-size:14px;font-weight:700;letter-spacing:0;
+          border-top:1px solid #22364a;white-space:normal;overflow:visible}
+  .pkitem:active{background:#1e344a}
+  .pkitem.on{background:#22364a}
+  .pkno{flex:0 0 22px;color:#7f93a6;font-weight:800;font-size:12px}
+  .pkclose{margin:10px 14px 14px;background:#2b4460;padding:14px 0;font-size:13px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="navrow">
+    <button class="nav" id="bPrev" aria-label="Previous call">&#8249;</button>
+    <button class="title" id="bPick" aria-label="Choose a call">
+      <span class="callname" id="callname">RED</span>
+      <span class="chip GREEN" id="chip">GREEN</span>
+      <span class="caret">&#9662;</span>
+    </button>
+    <button class="nav" id="bNext" aria-label="Next call">&#8250;</button>
+  </div>
+  <div class="sub" id="sub"></div>
+  <div class="dots" id="dots"></div>
+</header>
+
+<div id="stagewrap">
+  <svg id="stage" viewBox="0 26 100 154" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <marker id="mArrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+        <path d="M0,1.5 L9,5 L0,8.5 z" fill="#cbd5e1"/>
+      </marker>
+      <marker id="mBall" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+        <path d="M0,1.5 L9,5 L0,8.5 z" fill="#a16207"/>
+      </marker>
+      <marker id="mDrive" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse">
+        <path d="M0,1 L9,5 L0,9 z" fill="#ea580c"/>
+      </marker>
+      <marker id="mPass" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+        <path d="M0,1.5 L9,5 L0,8.5 z" fill="#16a34a"/>
+      </marker>
+    </defs>
+    <g id="scene"></g>
+  </svg>
+  <div class="notes" id="notes"></div>
+</div>
+
+<footer>
+  <div class="phaserow" id="phaserow"></div>
+  <div class="scrub" id="scrub">
+    <div class="track"><div class="fill" id="fill"></div></div>
+    <div class="ticks" id="ticks"></div>
+  </div>
+  <div class="btns">
+    <button id="bPlay">REPLAY</button>
+    <button id="bSpeed">1&times;</button>
+    <button id="bFlip">FLIP &#8597;</button>
+    <button id="bSetup">DYNAMIC</button>
+    <button id="bNotes">NOTES</button>
+  </div>
+</footer>
+
+<div class="picker" id="picker">
+  <div class="pksheet">
+    <div class="pkhead">CHOOSE A CALL</div>
+    <div class="pklist" id="pklist"></div>
+    <button class="pkclose" id="pkclose">CLOSE</button>
+  </div>
+</div>
+
+<script>
+/* ------------------------------------------------------------------ model */
+const ST   = {FRONT:140, RED:118, YELLOW:96, BLACK:74, BACK:52};
+const OURX = 42, OPPX = 68, GAP = 12, LIFTX = 47;
+const TOUCH_Y = 160, THROWER = [54, 170];
+
+/* where everyone stands once the lineout is set */
+const SET_POS = {
+  '1':[OURX, ST.FRONT], '2':[OURX, ST.RED], '3':[OURX, ST.YELLOW],
+  '4':[OURX, ST.BLACK], '5':[OURX, ST.BACK],
+  '9':[19, 94], '10':[6, 50]
+};
+const LINE_MEN = ['1','2','3','4','5'];
+
+/* a pod is three numbers and the middle one jumps */
+const SHAPES = {
+  RED:    {pod:['1','2','3'], st:'RED'},
+  YELLOW: {pod:['2','3','4'], st:'YELLOW'},
+  BLACK:  {pod:['3','4','5'], st:'BLACK'},
+  RBY:    {pod:['1','2','4'], st:'YELLOW', dummy:{pod:['1','2','3'], st:'RED'},    clear:'3', clearTo:[29,110]},
+  YBR:    {pod:['1','3','4'], st:'RED',    dummy:{pod:['2','3','4'], st:'YELLOW'}, clear:'2', clearTo:[30,92]},
+  BOPT:   {pod:['10','4','5'], st:'BLACK', stepOut:'1'}
+};
+
+/* drive sides. top = the throw end, bottom = the far (15m) end */
+const SIDES = {
+  RED:    {top:'4', bottom:'5', carrier:'10'},
+  YELLOW: {top:'1', bottom:'5', carrier:'10'},
+  RBY:    {top:'5', bottom:'3', carrier:'10', early:'5'},
+  YBR:    {top:'2', bottom:'5', carrier:'10'},
+  BOPT:   {top:'2', bottom:'3', carrier:'1'}
+};
+
+const MOVES = [
+  {shape:'RED', finish:'GREEN', name:'RED', sub:'pod 1·2·3 — 2 jumps — off the top',
+   notes:['1 and 3 lift, 2 jumps at the RED station.','Ball down to 9, 9 out to 10.','4 and 5 hold the line.']},
+  {shape:'RED', finish:'ORANGE', name:'RED', sub:'pod 1·2·3 — 2 jumps — drive',
+   notes:['1 and 3 lift, 2 jumps at the RED station.','4 pushes in at the top, 5 at the bottom.','10 is a forward — he takes the middle and the ball.']},
+  {shape:'YELLOW', finish:'GREEN', name:'YELLOW', sub:'pod 2·3·4 — 3 jumps — off the top',
+   notes:['2 and 4 lift, 3 jumps at the YELLOW station.','Ball down to 9, 9 out to 10.']},
+  {shape:'YELLOW', finish:'ORANGE', name:'YELLOW', sub:'pod 2·3·4 — 3 jumps — drive',
+   notes:['2 and 4 lift, 3 jumps at the YELLOW station.','1 pushes in at the top, 5 at the bottom.','10 takes the middle and the ball.']},
+  {shape:'BLACK', finish:'GREEN', name:'BLACK', sub:'pod 3·4·5 — 4 jumps — off the top',
+   notes:['3 and 5 lift, 4 jumps at the BLACK station.','Black is only driven as BLACK OPTION.']},
+  {shape:'RBY', finish:'GREEN', name:'RED BOUNCE YELLOW', sub:'dummy at RED — pod 1·2·4 — 2 jumps',
+   notes:['1·2·3 show at RED. 3 then clears out to the left.','1 and 2 push back, 4 steps up — pod re-forms at YELLOW.','Same man jumps: 2. 1 lifts top, 4 lifts bottom.','Opposition are left committed at RED.']},
+  {shape:'RBY', finish:'ORANGE', name:'RED BOUNCE YELLOW', sub:'dummy at RED — pod 1·2·4 — drive',
+   notes:['As the green, then the drive forms.','5 leaves early and travels to the top — he has the time.','3, who was in the dummy, joins at the bottom.','10 takes the middle and the ball.']},
+  {shape:'YBR', finish:'GREEN', name:'YELLOW BOUNCE RED', sub:'dummy at YELLOW — pod 1·3·4 — 3 jumps',
+   notes:['2·3·4 show at YELLOW. 2 then clears out to the left.','1 pushes back, 3 and 4 come forward — pod re-forms at RED.','Same man jumps: 3. 1 lifts top, 4 lifts bottom.','Opposition are left committed at YELLOW.']},
+  {shape:'YBR', finish:'ORANGE', name:'YELLOW BOUNCE RED', sub:'dummy at YELLOW — pod 1·3·4 — drive',
+   notes:['As the green, then the drive forms.','2, out of the dummy, joins at the top.','5 joins at the bottom — the jump is already at the front.','10 takes the middle and the ball.']},
+  {shape:'BOPT', finish:'GREEN', name:'BLACK OPTION', sub:'pod 10·4·5 — 4 jumps — off the top to 1',
+   notes:['1 moves out early — straight out, staying level with the front.','10 is a forward and comes in — pod is 10·4·5, legally still five in the line.','4 jumps, lifted by 10 at the top and 5 at the bottom.','1 runs up as the jump is made and takes the ball on the move.']},
+  {shape:'BOPT', finish:'ORANGE', name:'BLACK OPTION', sub:'pod 10·4·5 — 4 jumps — drive',
+   notes:['1 moves out first, 10 comes in — pod is 10·4·5.','4 jumps, lifted by 10 and 5.','2 joins at the top, 3 joins at the bottom.','1 takes the ball in the middle of the maul.']}
+];
+
+/* ------------------------------------------------------- timeline builder */
+const ease = t => t<0 ? 0 : t>1 ? 1 : (t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2);
+
+function podPositions(stName, pod, x){
+  const s = ST[stName];
+  return {[pod[0]]:[x, s+GAP], [pod[1]]:[x, s], [pod[2]]:[x, s-GAP]};
+}
+
+function buildTimeline(move, spaces){
+  const sh = SHAPES[move.shape], sd = SIDES[move.shape];
+  const bounce = !!sh.dummy, bopt = move.shape === 'BOPT';
+  const jumper = sh.pod[1], liftTop = sh.pod[0], liftBot = sh.pod[2];
+  const station = ST[sh.st];
+
+  const T = {};
+  T.set    = spaces ? 2.9 : 1.9;
+  T.ready  = T.set + (bounce ? 2.05 : 0.95);   // pod formed, ready to lift
+  T.catch  = T.ready + 0.85;
+  T.throw  = T.catch - 0.62;
+  T.lift   = T.catch - 0.58;
+  T.down   = T.catch + 0.38;
+  T.p9     = T.down  + 0.42;
+  T.p10    = T.p9    + 0.42;
+  T.bind   = T.catch + 0.34;
+  T.dr0    = T.catch + 0.62;
+  T.dr1    = T.dr0   + 1.45;
+  T.end    = (move.finish === 'ORANGE') ? T.dr1 + 0.7 : T.p10 + 0.8;
+
+  const K = {}; LINE_MEN.concat(['9','10']).forEach(id => K[id] = []);
+  const add = (id,t,x,y,s) => {
+    const k = K[id], lastT = k.length ? k[k.length-1].t : -1;
+    k.push({t: Math.max(t, lastT), x, y, s: s===undefined?1:s});
+  };
+
+  /* ---- phase 0: walk in ------------------------------------------------ */
+  ['1','5','9','10'].forEach(id => add(id, 0, SET_POS[id][0], SET_POS[id][1]));
+  if (bopt){
+    add('1',  T.set*0.22, OURX, ST.FRONT);
+    add('1',  T.set*0.55, 28, ST.FRONT);                // out early, and just out
+    add('10', T.set*0.34, SET_POS['10'][0], SET_POS['10'][1]);
+    add('10', T.set*0.95, OURX, ST.BLACK + GAP);        // comes in as the top lifter
+  } else {
+    add('1',  T.set, SET_POS['1'][0], SET_POS['1'][1]);
+    add('10', T.set, SET_POS['10'][0], SET_POS['10'][1]);
+  }
+  ['5','9'].forEach(id => add(id, T.set, SET_POS[id][0], SET_POS[id][1]));
+
+  const movers = ['2','3','4'];
+  if (spaces){
+    const bunch = {'2':106, '3':96, '4':86};
+    movers.forEach(id => {
+      add(id, 0.0, 31, bunch[id]);
+      add(id, 1.0, OURX, bunch[id]);          // get in, close together
+      add(id, 1.8, OURX, bunch[id]);          // wait
+      add(id, T.set - 0.2, SET_POS[id][0], SET_POS[id][1]);   // spread
+    });
+  } else {
+    movers.forEach(id => {
+      add(id, 0.0, 31, SET_POS[id][1]);
+      add(id, T.set - 0.25, SET_POS[id][0], SET_POS[id][1]);  // in quick
+    });
+  }
+  movers.forEach(id => add(id, T.set, SET_POS[id][0], SET_POS[id][1]));
+
+  /* ---- phase 2: dummy, clear-out, re-form ----------------------------- */
+  if (bounce){
+    const dpos = podPositions(sh.dummy.st, sh.dummy.pod, OURX);
+    for (const id in dpos){ add(id, T.set + 0.15, SET_POS[id][0], SET_POS[id][1]);
+                            add(id, T.set + 0.65, dpos[id][0], dpos[id][1]); }
+    // the show: dummy jumper dips and shapes, then settles
+    const dj = sh.dummy.pod[1];
+    add(dj, T.set + 0.95, dpos[dj][0], dpos[dj][1], 1.18);
+    add(dj, T.set + 1.25, dpos[dj][0], dpos[dj][1], 1.0);
+    // the man who clears out
+    add(sh.clear, T.set + 1.30, dpos[sh.clear][0], dpos[sh.clear][1]);
+    add(sh.clear, T.set + 1.95, sh.clearTo[0], sh.clearTo[1]);
+  }
+
+  /* ---- the real pod --------------------------------------------------- */
+  const ppos = podPositions(sh.st, sh.pod, OURX);
+  const formStart = bounce ? T.set + 1.35 : T.set + 0.25;
+  for (const id in ppos){
+    const from = K[id][K[id].length-1];
+    add(id, formStart, from.x, from.y);
+    add(id, T.ready, ppos[id][0], ppos[id][1]);
+  }
+  // dip, then drive up
+  add(liftTop, T.lift - 0.12, ppos[liftTop][0], ppos[liftTop][1], 0.9);
+  add(liftBot, T.lift - 0.12, ppos[liftBot][0], ppos[liftBot][1], 0.9);
+  add(liftTop, T.catch, LIFTX, station + GAP - 2, 1);
+  add(liftBot, T.catch, LIFTX, station - GAP + 2, 1);
+  add(jumper,  T.lift,  ppos[jumper][0], ppos[jumper][1], 1);
+  add(jumper,  T.catch, LIFTX + 1, station, 1.5);
+
+  /* ---- finish --------------------------------------------------------- */
+  let maul = null;
+  if (move.finish === 'ORANGE'){
+    const carrier = sd.carrier;
+    const M = {
+      [jumper] : [OURX + 4, station],
+      [liftTop]: [OURX + 4, station + 9],
+      [liftBot]: [OURX + 4, station - 9],
+      [sd.top] : [OURX + 2, station + 19],
+      [sd.bottom]:[OURX + 2, station - 19],
+      [carrier]: [OURX - 9, station]
+    };
+    const early = sd.early;
+    const joiners = [sd.top, sd.bottom, carrier];
+    joiners.forEach(id => {
+      const from = K[id][K[id].length-1];
+      const leave = (id === early) ? T.set + 0.45 : T.throw - 0.05;
+      add(id, leave, from.x, from.y);
+      if (id === early){                      // long trip round the front
+        add(id, (leave + T.bind)/2, OURX - 7, station + 30);
+      } else if (bopt && id === carrier){     // runs up as the jump is made
+        add(id, T.catch, 27, station + 16);
+      }
+      add(id, T.bind, M[id][0], M[id][1]);
+    });
+    add(jumper, T.down, M[jumper][0], M[jumper][1], 1.1);
+    add(liftTop, T.bind, M[liftTop][0], M[liftTop][1]);
+    add(liftBot, T.bind, M[liftBot][0], M[liftBot][1]);
+
+    const members = [jumper, liftTop, liftBot, sd.top, sd.bottom, carrier];
+    members.forEach(id => {
+      const from = K[id][K[id].length-1];
+      add(id, T.dr0, from.x, from.y, from.s);
+      add(id, T.dr1, from.x + 16, from.y, from.s);
+    });
+    maul = {t0:T.bind, t1:T.dr1, members, station};
+  } else {
+    add(jumper, T.down, OURX + 2, station, 1);
+  }
+
+  /* ---- ball ----------------------------------------------------------- */
+  const B = [];
+  B.push({t:0, x:THROWER[0], y:THROWER[1]});
+  B.push({t:T.throw, x:THROWER[0], y:THROWER[1]});
+  B.push({t:T.catch, x:LIFTX + 4, y:station, ctrl:[46, (station + THROWER[1])/2 - 6]});
+
+  let passes = [];
+  if (move.finish === 'GREEN' && !bopt){
+    B.push({t:T.down, x:OURX + 2, y:station});
+    B.push({t:T.p9,  x:SET_POS['9'][0],  y:SET_POS['9'][1]});
+    B.push({t:T.p10, x:SET_POS['10'][0], y:SET_POS['10'][1]});
+    passes = [{t:T.p9,  from:[OURX+2, station], to:SET_POS['9']},
+              {t:T.p10, from:SET_POS['9'],      to:SET_POS['10']}];
+  } else if (move.finish === 'GREEN'){
+    /* black option: 1 runs up as the jump is made and takes it on the move */
+    add('1', T.throw - 0.05, 28, ST.FRONT);
+    add('1', T.catch, 27, station + 16);
+    add('1', T.down + 0.30, 26, station - 2);
+    add('1', T.down + 0.95, 37, station - 14);
+    add('1', T.down + 1.65, 57, station - 24);
+    B.push({t:T.down, x:OURX + 2, y:station});
+    B.push({t:T.down + 0.30, x:29, y:station - 4});
+    B.push({t:T.down + 0.95, x:40, y:station - 16});
+    B.push({t:T.down + 1.65, x:60, y:station - 26});
+    passes = [{t:T.down + 0.30, from:[OURX+2, station], to:[26, station - 2]}];
+    T.end = T.down + 2.35;
+  } else {
+    B.push({t:T.bind, x:OURX - 5, y:station - 4});
+    B.push({t:T.dr0,  x:OURX - 5, y:station - 4});
+    B.push({t:T.dr1,  x:OURX - 5 + 16, y:station - 4});
+  }
+
+  /* ---- opposition: they group where they think we are lifting --------- */
+  const readSt = ST[bounce ? sh.dummy.st : sh.st];
+  const O = [];
+  const oppSet = [ST.FRONT, ST.RED, ST.YELLOW, ST.BLACK, ST.BACK];
+  const oppEnd = [ST.FRONT, readSt + GAP, readSt, readSt - GAP, ST.BACK];
+  for (let i=0;i<5;i++) O.push([{t:0,y:oppSet[i]},{t:T.set-0.5,y:oppSet[i]},{t:T.set+0.5,y:oppEnd[i]}]);
+
+  const phases = [
+    ['WALK IN', 0], ['SET', T.set], ['MOVE', T.set+0.2],
+    ['THROW', T.throw], ['LIFT', T.lift], ['CATCH', T.catch],
+    ['FINISH', T.down], ['HOLD', T.end - 0.35]
+  ];
+  if (!bounce) phases.splice(2,1);
+
+  return {K, B, O, maul, passes, T, phases, dur:T.end, jumper, station};
+}
+
+/* ---------------------------------------------------------------- sampling */
+function sample(kfs, t){
+  if (!kfs.length) return null;
+  if (t <= kfs[0].t) return {...kfs[0]};
+  for (let i=0;i<kfs.length-1;i++){
+    const a = kfs[i], b = kfs[i+1];
+    if (t <= b.t){
+      const span = b.t - a.t;
+      const u = span <= 0 ? 1 : ease((t - a.t)/span);
+      if (b.ctrl){                               // quadratic (ball flight)
+        const m = 1-u;
+        return {x: m*m*a.x + 2*m*u*b.ctrl[0] + u*u*b.x,
+                y: m*m*a.y + 2*m*u*b.ctrl[1] + u*u*b.y,
+                s: 1, moving:true};
+      }
+      return {x: a.x + (b.x-a.x)*u, y: a.y + (b.y-a.y)*u,
+              s: (a.s??1) + ((b.s??1)-(a.s??1))*u,
+              moving: Math.abs(b.x-a.x) + Math.abs(b.y-a.y) > 1.5 && u > 0.02 && u < 0.99};
+    }
+  }
+  return {...kfs[kfs.length-1]};
+}
+
+/* ---------------------------------------------------------------- renderer */
+const scene = document.getElementById('scene');
+let flip = false, spaces = false, idx = 0, speed = 1;
+let tl = null, playing = true, clock = 0, last = 0;
+
+const VMIN = 26, VMAX = 180;
+const Y = y => flip ? (VMIN + VMAX - y) : y;
+const R = {'1':5.4,'2':5.4,'3':5.4,'4':5.4,'5':5.4,'9':4.9,'10':4.9};
+
+function chipsAndPitch(){
+  const o = [];
+  o.push(`<rect x="0" y="0" width="100" height="180" fill="#eef2ea"/>`);
+  o.push(`<rect x="0" y="${Math.min(Y(0),Y(TOUCH_Y))}" width="100" height="${TOUCH_Y}" fill="#dfe8d9"/>`);
+  o.push(`<line x1="0" y1="${Y(TOUCH_Y)}" x2="100" y2="${Y(TOUCH_Y)}" stroke="#fff" stroke-width="2.2"/>`);
+  [['5m',ST.FRONT],['15m',ST.BACK]].forEach(([l,y])=>{
+    o.push(`<line x1="24" y1="${Y(y)}" x2="90" y2="${Y(y)}" stroke="#fff" stroke-width=".6" stroke-dasharray="2 2"/>`);
+    o.push(`<text x="92" y="${Y(y)+1.2}" font-size="2.8" fill="#9aab95">${l}</text>`);
+  });
+  o.push(`<rect x="48" y="${Math.min(Y(42),Y(156))}" width="14" height="114" fill="#fff" opacity=".4"/>`);
+  const target = tl ? tl.station : null;
+  [['RED',ST.RED,'#dc2626','#fff'],['YELLOW',ST.YELLOW,'#eab308','#3f2d00'],['BLACK',ST.BLACK,'#111827','#fff']]
+    .forEach(([n,y,bg,fg])=>{
+      const on = target === y;
+      o.push(`<rect x="49" y="${Y(y)-2.8}" width="12.4" height="5.6" rx="1.3" fill="${bg}" opacity="${on?1:.28}"/>`);
+      o.push(`<text x="55.2" y="${Y(y)+1.2}" text-anchor="middle" font-size="${n==='YELLOW'?2.7:3.1}" font-weight="700" fill="${fg}" opacity="${on?1:.45}">${n}</text>`);
+    });
+  return o.join('');
+}
+
+function draw(t){
+  const o = [chipsAndPitch()];
+  const mv = MOVES[idx];
+
+  /* opposition */
+  tl.O.forEach(kf => {
+    const p = sample(kf.map(k=>({t:k.t,x:OPPX,y:k.y})), t);
+    o.push(`<circle cx="${OPPX}" cy="${Y(p.y)}" r="5" fill="none" stroke="#94a3b8" stroke-width="1.2"/>`);
+  });
+
+  /* maul block */
+  if (tl.maul && t >= tl.maul.t0){
+    const pts = tl.maul.members.map(id => sample(tl.K[id], t));
+    const xs = pts.map(p=>p.x), ys = pts.map(p=>p.y);
+    const x0 = Math.min(...xs)-7, x1 = Math.max(...xs)+7;
+    const y0 = Math.min(...ys)-7, y1 = Math.max(...ys)+7;
+    const a = Math.min(1,(t-tl.maul.t0)/0.35);
+    o.push(`<rect x="${x0}" y="${Math.min(Y(y0),Y(y1))}" width="${x1-x0}" height="${Math.abs(y1-y0)}" rx="7"
+             fill="#ea580c" opacity="${0.17*a}" stroke="#ea580c" stroke-width=".8" stroke-opacity="${0.6*a}"/>`);
+    if (t >= tl.T.dr0){
+      const cy = Y((y0+y1)/2);
+      o.push(`<line x1="${x1+2}" y1="${cy}" x2="${x1+13}" y2="${cy}" stroke="#ea580c" stroke-width="1.4" marker-end="url(#mDrive)"/>`);
+    }
+  }
+
+  /* our players */
+  const order = LINE_MEN.concat(['9','10']);
+  order.forEach(id => {
+    const p = sample(tl.K[id], t);
+    if (!p) return;
+    const isJ = id === tl.jumper && p.s > 1.12;
+    const r = R[id] * (isJ ? p.s : 1);
+    const cx = p.x, cy = Y(p.y);
+    if (p.moving){
+      const prev = sample(tl.K[id], Math.max(0, t-0.28));
+      o.push(`<line x1="${prev.x}" y1="${Y(prev.y)}" x2="${cx}" y2="${cy}" stroke="#7d8f9c" stroke-width=".7"
+               stroke-dasharray="1.4 1.6" opacity=".65" marker-end="url(#mArrow)"/>`);
+    }
+    if (isJ) o.push(`<ellipse cx="${cx}" cy="${cy+r+2.4}" rx="${r*0.75}" ry="1.5" fill="#0f172a" opacity=".18"/>`);
+    const fill = isJ ? '#0f766e' : (id==='9'||id==='10' ? '#1e3a5f' : '#1e3a5f');
+    const stroke = (id==='9'||id==='10') ? ' stroke="#16a34a" stroke-width="1.1"' :
+                   (isJ ? ' stroke="#fff" stroke-width="1"' : '');
+    o.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}"${stroke}/>`);
+    o.push(`<text x="${cx}" y="${cy + r*0.32}" text-anchor="middle" font-size="${(id==='10'?3.9:4.4)*(isJ?1.2:1)}"
+             font-weight="800" fill="#fff">${id}</text>`);
+  });
+
+  /* pass lines */
+  tl.passes.forEach(p => {
+    if (t >= p.t - 0.42 && t < p.t + 0.9){
+      const a = t < p.t ? 1 : Math.max(0, 1-(t-p.t)/0.9);
+      o.push(`<line x1="${p.from[0]}" y1="${Y(p.from[1])}" x2="${p.to[0]}" y2="${Y(p.to[1])}"
+               stroke="#16a34a" stroke-width=".9" opacity="${0.85*a}" marker-end="url(#mPass)"/>`);
+    }
+  });
+
+  /* thrower + ball */
+  o.push(`<circle cx="${THROWER[0]}" cy="${Y(THROWER[1])}" r="4.6" fill="#1e3a5f"/>`);
+  o.push(`<text x="${THROWER[0]}" y="${Y(THROWER[1]) + (flip ? -6.6 : 8.4)}" text-anchor="middle"
+           font-size="2.9" font-weight="700" fill="#5b6b7a" letter-spacing=".1">THROWER</text>`);
+  const b = sample(tl.B, t);
+  o.push(`<ellipse cx="${b.x}" cy="${Y(b.y)}" rx="1.7" ry="2.4" fill="#a16207" stroke="#fff" stroke-width=".5"
+           transform="rotate(${flip?-25:25} ${b.x} ${Y(b.y)})"/>`);
+
+  /* attack arrow */
+  o.push(`<line x1="79" y1="${Y(172)}" x2="93" y2="${Y(172)}" stroke="#c2410c" stroke-width="1.2" marker-end="url(#mDrive)" opacity=".8"/>`);
+  o.push(`<text x="86" y="${Y(172)+(flip?5:-3)}" text-anchor="middle" font-size="2.8" font-weight="700" fill="#c2410c" opacity=".85">ATTACK</text>`);
+
+  scene.innerHTML = o.join('');
+}
+
+/* ------------------------------------------------------------------- chrome */
+const el = id => document.getElementById(id);
+function paintChrome(){
+  const mv = MOVES[idx];
+  el('callname').textContent = mv.name;
+  const chip = el('chip'); chip.textContent = mv.finish; chip.className = 'chip ' + mv.finish;
+  el('sub').textContent = mv.sub;
+  el('dots').innerHTML = MOVES.map((_,i)=>
+    `<button class="dotbtn${i===idx?' on':''}" data-i="${i}" aria-label="Call ${i+1}"><span class="dot"></span></button>`).join('');
+  el('pklist').innerHTML = MOVES.map((m,i)=>
+    `<button class="pkitem${i===idx?' on':''}" data-i="${i}">
+       <span class="pkno">${i+1}</span><span>${m.name}</span>
+       <span class="chip ${m.finish}" style="margin-left:auto">${m.finish}</span>
+     </button>`).join('');
+  el('notes').innerHTML = `<h4>${mv.name} · ${mv.finish}</h4><ul>${mv.notes.map(n=>`<li>${n}</li>`).join('')}</ul>`;
+  el('ticks').innerHTML = tl.phases.map(p=>`<span class="tick" style="left:${(p[1]/tl.dur*100).toFixed(2)}%"></span>`).join('');
+  el('phaserow').innerHTML = tl.phases.map(p=>`<span>${p[0]}</span>`).join('');
+}
+function load(i, keepT){
+  idx = (i + MOVES.length) % MOVES.length;
+  const prev = tl ? clock/tl.dur : 0;
+  tl = buildTimeline(MOVES[idx], spaces);
+  clock = keepT ? Math.min(tl.dur, prev*tl.dur) : 0;
+  playing = true; paintChrome();
+}
+function frame(ts){
+  if (!last) last = ts;
+  const dt = Math.min(0.05, (ts-last)/1000); last = ts;
+  if (playing){
+    clock += dt*speed;
+    if (clock >= tl.dur){ clock = tl.dur; playing = false; }
+  }
+  el('fill').style.width = (clock/tl.dur*100) + '%';
+  const ph = tl.phases.filter(p=>clock>=p[1]).pop();
+  document.querySelectorAll('#phaserow span').forEach((s,i)=>{
+    s.style.color = (tl.phases[i] === ph) ? '#e8edf2' : '#7f93a6';
+  });
+  draw(clock);
+  requestAnimationFrame(frame);
+}
+
+/* controls */
+el('bPlay').onclick = () => { clock = 0; playing = true; };
+el('bPrev').onclick = () => load(idx - 1, false);
+el('bNext').onclick = () => load(idx + 1, false);
+el('bPick').onclick = () => el('picker').classList.add('show');
+el('pkclose').onclick = () => el('picker').classList.remove('show');
+el('picker').addEventListener('click', e => { if (e.target === el('picker')) el('picker').classList.remove('show'); });
+el('pklist').addEventListener('click', e => {
+  const b = e.target.closest('.pkitem'); if (!b) return;
+  load(+b.dataset.i, false); el('picker').classList.remove('show');
+});
+el('dots').addEventListener('click', e => {
+  const b = e.target.closest('.dotbtn'); if (!b) return;
+  load(+b.dataset.i, false);
+});
+el('bSpeed').onclick = e => { speed = speed===1 ? 0.5 : 1; e.target.innerHTML = speed===1 ? '1&times;' : '0.5&times;'; e.target.classList.toggle('on', speed!==1); };
+el('bFlip').onclick = e => { flip = !flip; e.target.classList.toggle('on', flip); };
+el('bSetup').onclick = e => { spaces = !spaces; e.target.textContent = spaces ? 'SPACES' : 'DYNAMIC'; e.target.classList.toggle('on', spaces); load(idx,false); };
+el('bNotes').onclick = e => { el('notes').classList.toggle('show'); e.target.classList.toggle('on'); };
+
+const scrub = el('scrub');
+const seek = ev => {
+  const r = scrub.getBoundingClientRect();
+  const x = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left;
+  clock = Math.max(0, Math.min(1, x/r.width)) * tl.dur; playing = false;
+};
+scrub.addEventListener('pointerdown', e => { scrub.setPointerCapture(e.pointerId); seek(e); });
+scrub.addEventListener('pointermove', e => { if (e.buttons) seek(e); });
+
+let sx=0, sy=0, down=false;
+const wrap = document.getElementById('stagewrap');
+wrap.addEventListener('pointerdown', e => { down = true; sx = e.clientX; sy = e.clientY; });
+wrap.addEventListener('pointercancel', () => { down = false; });
+wrap.addEventListener('pointerup', e => {
+  if (!down) return; down = false;
+  const dx = e.clientX - sx, dy = e.clientY - sy;
+  if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)*1.2){
+    load(idx + (dx < 0 ? 1 : -1), false);
+  } else if (dy < -50 && Math.abs(dy) > Math.abs(dx)){
+    el('notes').classList.add('show');
+  } else if (Math.abs(dx) < 12 && Math.abs(dy) < 12){
+    if (el('notes').classList.contains('show')) el('notes').classList.remove('show');
+    else if (clock >= tl.dur){ clock = 0; playing = true; }
+    else playing = !playing;
+  }
+});
+addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') load(idx+1,false);
+  if (e.key === 'ArrowLeft')  load(idx-1,false);
+  if (e.key === ' '){ e.preventDefault(); if (clock>=tl.dur){clock=0;playing=true;} else playing=!playing; }
+  if (e.key === 'f') el('bFlip').click();
+});
+
+/* deep link for a shareable view: #top / #spaces / #4 */
+(function(){
+  const h = location.hash.slice(1).split(/[,&]/);
+  if (h.includes('top')) { flip = true; el('bFlip').classList.add('on'); }
+  if (h.includes('spaces')) { spaces = true; el('bSetup').textContent='SPACES'; el('bSetup').classList.add('on'); }
+  const n = h.map(Number).find(v => !isNaN(v) && v>0 && v<=MOVES.length);
+  load(n ? n-1 : 0, false);
+})();
+requestAnimationFrame(frame);
+
+/* test hook for headless checking */
+window.__lo = { load:(i,t)=>{ load(i,false); clock = t; playing=false; draw(clock); },
+                at:(t)=>{ clock=t; playing=false; draw(t); },
+                tl:()=>tl, moves:MOVES, setFlip:v=>{flip=v}, setSpaces:v=>{spaces=v} };
+</script>
+</body>
+</html>
