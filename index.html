@@ -51,9 +51,11 @@
   .chip.ORANGE{background:var(--orange);color:#2a0f02}
   .chip.CARRY{background:#38bdf8;color:#062231}
   .sub{font-size:12px;color:#93a4b5;margin-top:2px;min-height:16px}
-  .dots{display:flex;gap:2px;margin-top:6px;justify-content:center}
-  .dotbtn{flex:0 0 auto;width:22px;height:22px;padding:0;background:transparent;border-radius:99px;
+  .dots{display:flex;gap:1px;margin-top:6px;justify-content:center}
+  .dotbtn{flex:0 0 auto;width:18px;height:18px;padding:0;background:transparent;border-radius:99px;
           display:flex;align-items:center;justify-content:center}
+  .dotbtn.four .dot{background:#4a6a5a}
+  .dotbtn.four.on .dot{background:#e8edf2}
   .dot{width:7px;height:7px;border-radius:99px;background:#3c5064;display:block;transition:all .18s}
   .dotbtn.on .dot{background:#e8edf2;width:9px;height:9px}
 
@@ -98,6 +100,8 @@
   .pkitem:active{background:#1e344a}
   .pkitem.on{background:#22364a}
   .pkno{flex:0 0 22px;color:#7f93a6;font-weight:800;font-size:12px}
+  .pkgroup{padding:11px 16px 5px;font-size:10px;letter-spacing:.12em;font-weight:800;color:#7f93a6;
+           background:#12222f;border-top:1px solid #22364a}
   .pkclose{margin:10px 14px 14px;background:#2b4460;padding:14px 0;font-size:13px}
 </style>
 </head>
@@ -163,149 +167,209 @@
 
 <script>
 /* ------------------------------------------------------------------ model */
-const ST   = {FRONT:140, RED:118, YELLOW:96, BLACK:74, BACK:52};
 const OURX = 42, OPPX = 68, GAP = 12, LIFTX = 47;
 const TOUCH_Y = 160, THROWER = [54, 170];
+const BACKS = {'9':[19, 94], '10':[6, 50]};
 
-/* where everyone stands once the lineout is set */
-const SET_POS = {
-  '1':[OURX, ST.FRONT], '2':[OURX, ST.RED], '3':[OURX, ST.YELLOW],
-  '4':[OURX, ST.BLACK], '5':[OURX, ST.BACK],
-  '9':[19, 94], '10':[6, 50]
+/* the two lineout sizes. y runs from the touchline (160) up the screen */
+const LINE = {
+  5: {ids:['1','2','3','4','5'],
+      y:{'1':140,'2':118,'3':96,'4':74,'5':52},
+      movers:['2','3','4'],
+      chips:[['RED',118,'#dc2626','#ffffff'],['YELLOW',96,'#eab308','#3f2d00'],['BLACK',74,'#111827','#ffffff']]},
+  4: {ids:['1','2','3','4'],
+      y:{'1':134,'2':110,'3':86,'4':62},
+      movers:['2','3'],
+      chips:[['Y1',110,'#eab308','#3f2d00'],['Y2',86,'#f59e0b','#3f2d00'],['B',74,'#111827','#ffffff']]}
 };
-const LINE_MEN = ['1','2','3','4','5'];
 
 /* a pod is three numbers and the middle one jumps */
 const SHAPES = {
-  RED:    {pod:['1','2','3'], st:'RED'},
-  YELLOW: {pod:['2','3','4'], st:'YELLOW'},
-  BLACK:  {pod:['3','4','5'], st:'BLACK'},
-  RBY:    {pod:['1','2','4'], st:'YELLOW', dummy:{pod:['1','2','3'], st:'RED'},    clear:'3', clearTo:[29,110]},
-  YBR:    {pod:['1','3','4'], st:'RED',    dummy:{pod:['2','3','4'], st:'YELLOW'}, clear:'2', clearTo:[30,92]},
-  BOPT:   {pod:['10','4','5'], st:'BLACK', stepOut:'1'}
+  RED:    {men:5, pod:['1','2','3'],  st:118},
+  YELLOW: {men:5, pod:['2','3','4'],  st:96},
+  BLACK:  {men:5, pod:['3','4','5'],  st:74},
+  RBY:    {men:5, pod:['1','2','4'],  st:96,  dummy:{pod:['1','2','3'], st:118}, clear:'3', clearTo:[29,110]},
+  YBR:    {men:5, pod:['1','3','4'],  st:118, dummy:{pod:['2','3','4'], st:96},  clear:'2', clearTo:[30,92]},
+  BOPT:   {men:5, pod:['10','4','5'], st:74,  stepOut:'1'},
+  Y1:     {men:4, pod:['1','2','3'],  st:110},
+  Y2:     {men:4, pod:['2','3','4'],  st:86},
+  BOPT4:  {men:4, pod:['10','3','4'], st:74,  stepOut:'1', frontPair:true},
+  KIWI:   {men:5, pod:['2','3','4'],  st:118, kiwi:true,
+           dummies:[{pod:['1','2','3'], st:118}, {pod:['1','3','4'], st:96}]}
 };
 
-/* drive sides. top = the throw end, bottom = the far (15m) end */
+/* drive sides. top = the throw end, bottom = the far (15m) end.
+   'T' is the thrower, who joins every four-man drive. */
 const SIDES = {
   RED:    {top:'4', bottom:'5', carrier:'10'},
   YELLOW: {top:'1', bottom:'5', carrier:'10'},
   RBY:    {top:'5', bottom:'3', carrier:'10', early:'5'},
   YBR:    {top:'2', bottom:'5', carrier:'10'},
-  BOPT:   {top:'2', bottom:'3', carrier:'1'}
+  BOPT:   {top:'2', bottom:'3', carrier:'1'},
+  Y1:     {top:'T', bottom:'4', carrier:'10'},
+  Y2:     {top:'T', bottom:'1', carrier:'10'},
+  BOPT4:  {top:'T', bottom:'2', carrier:'1'}
 };
 
 const MOVES = [
-  {shape:'RED', finish:'GREEN', name:'RED', sub:'pod 1·2·3 — 2 jumps — off the top',
-   notes:['1 and 3 lift, 2 jumps at the RED station.','Ball down to 9, 9 out to 10.','4 and 5 hold the line.']},
-  {shape:'RED', finish:'ORANGE', name:'RED', sub:'pod 1·2·3 — 2 jumps — drive',
-   notes:['1 and 3 lift, 2 jumps at the RED station.','4 pushes in at the top, 5 at the bottom.','10 is a forward — he takes the middle and the ball.']},
-  {shape:'YELLOW', finish:'GREEN', name:'YELLOW', sub:'pod 2·3·4 — 3 jumps — off the top',
-   notes:['2 and 4 lift, 3 jumps at the YELLOW station.','Ball down to 9, 9 out to 10.']},
-  {shape:'YELLOW', finish:'ORANGE', name:'YELLOW', sub:'pod 2·3·4 — 3 jumps — drive',
-   notes:['2 and 4 lift, 3 jumps at the YELLOW station.','1 pushes in at the top, 5 at the bottom.','10 takes the middle and the ball.']},
-  {shape:'BLACK', finish:'GREEN', name:'BLACK', sub:'pod 3·4·5 — 4 jumps — off the top',
+  {shape:'RED', finish:'ORANGE', group:'5 MAN', name:'RED', sub:'pod 1·2·3 — 2 jumps — drive',
+   notes:['1 and 3 lift, 2 jumps at the RED station.','4 pushes in at the top, 5 at the bottom.','+1 is a forward — he takes the middle and the ball.']},
+  {shape:'YELLOW', finish:'GREEN', group:'5 MAN', name:'YELLOW', sub:'pod 2·3·4 — 3 jumps — off the top',
+   notes:['2 and 4 lift, 3 jumps at the YELLOW station.','Ball down to 9, 9 back out to +1.']},
+  {shape:'YELLOW', finish:'ORANGE', group:'5 MAN', name:'YELLOW', sub:'pod 2·3·4 — 3 jumps — drive',
+   notes:['2 and 4 lift, 3 jumps at the YELLOW station.','1 pushes in at the top, 5 at the bottom.','+1 takes the middle and the ball.']},
+  {shape:'BLACK', finish:'GREEN', group:'5 MAN', name:'BLACK', sub:'pod 3·4·5 — 4 jumps — off the top',
    notes:['3 and 5 lift, 4 jumps at the BLACK station.','Black is only driven as BLACK OPTION.']},
-  {shape:'RBY', finish:'GREEN', name:'RED BOUNCE YELLOW', sub:'dummy at RED — pod 1·2·4 — 2 jumps',
+  {shape:'RBY', finish:'GREEN', group:'5 MAN', name:'RED BOUNCE YELLOW', sub:'dummy at RED — pod 1·2·4 — 2 jumps',
    notes:['1·2·3 show at RED. 3 then clears out to the left.','1 and 2 push back, 4 steps up — pod re-forms at YELLOW.','Same man jumps: 2. 1 lifts top, 4 lifts bottom.','Opposition are left committed at RED.']},
-  {shape:'RBY', finish:'ORANGE', name:'RED BOUNCE YELLOW', sub:'dummy at RED — pod 1·2·4 — drive',
-   notes:['As the green, then the drive forms.','5 leaves early and travels to the top — he has the time.','3, who was in the dummy, joins at the bottom.','10 takes the middle and the ball.']},
-  {shape:'YBR', finish:'GREEN', name:'YELLOW BOUNCE RED', sub:'dummy at YELLOW — pod 1·3·4 — 3 jumps',
+  {shape:'RBY', finish:'ORANGE', group:'5 MAN', name:'RED BOUNCE YELLOW', sub:'dummy at RED — pod 1·2·4 — drive',
+   notes:['As the green, then the drive forms.','5 leaves early and travels to the top — he has the time.','3, who was in the dummy, joins at the bottom.','+1 takes the middle and the ball.']},
+  {shape:'YBR', finish:'GREEN', group:'5 MAN', name:'YELLOW BOUNCE RED', sub:'dummy at YELLOW — pod 1·3·4 — 3 jumps',
    notes:['2·3·4 show at YELLOW. 2 then clears out to the left.','1 pushes back, 3 and 4 come forward — pod re-forms at RED.','Same man jumps: 3. 1 lifts top, 4 lifts bottom.','Opposition are left committed at YELLOW.']},
-  {shape:'YBR', finish:'ORANGE', name:'YELLOW BOUNCE RED', sub:'dummy at YELLOW — pod 1·3·4 — drive',
-   notes:['As the green, then the drive forms.','2, out of the dummy, joins at the top.','5 joins at the bottom — the jump is already at the front.','10 takes the middle and the ball.']},
-  {shape:'BOPT', finish:'GREEN', name:'BLACK OPTION', sub:'pod 10·4·5 — 4 jumps — off the top to 1',
-   notes:['1 moves out early — straight out, staying level with the front.','10 is a forward and comes in — pod is 10·4·5, legally still five in the line.','4 jumps, lifted by 10 at the top and 5 at the bottom.','1 runs up as the jump is made and takes the ball on the move.']},
-  {shape:'BOPT', finish:'ORANGE', name:'BLACK OPTION', sub:'pod 10·4·5 — 4 jumps — drive',
-   notes:['1 moves out first, 10 comes in — pod is 10·4·5.','4 jumps, lifted by 10 and 5.','2 joins at the top, 3 joins at the bottom.','1 takes the ball in the middle of the maul.']}
+  {shape:'YBR', finish:'ORANGE', group:'5 MAN', name:'YELLOW BOUNCE RED', sub:'dummy at YELLOW — pod 1·3·4 — drive',
+   notes:['As the green, then the drive forms.','2, out of the dummy, joins at the top.','5 joins at the bottom — the jump is already at the front.','+1 takes the middle and the ball.']},
+  {shape:'BOPT', finish:'GREEN', group:'5 MAN', name:'BLACK OPTION', sub:'pod +1·4·5 — 4 jumps — off the top to 1',
+   notes:['1 moves out early — straight out, level with the front.','+1 is a forward and comes in — pod is +1·4·5, still five in the line.','4 jumps, lifted by +1 at the top and 5 at the bottom.','1 runs up as the jump is made and takes it on the move.']},
+  {shape:'BOPT', finish:'ORANGE', group:'5 MAN', name:'BLACK OPTION', sub:'pod +1·4·5 — 4 jumps — drive',
+   notes:['1 moves out early — straight out, level with the front.','+1 comes in — pod is +1·4·5. 4 jumps, lifted by +1 and 5.','1 runs up as the jump is made and takes the ball in the middle.','2 joins at the top, 3 joins at the bottom.']},
+  {shape:'KIWI', finish:'GREEN', group:'5 MAN', name:'KIWI', sub:'two dummies — pod 2·3·4 at RED — 1 strikes',
+   notes:['1·2·3 dummy at the front, then 2 steps out.','1·3·4 dummy in the middle.','2 comes back in to the 1 position; 1 steps out.','Pod is 2·3·4 lifting at RED — 3 jumps.','1 takes it dynamically in the gap between RED and the thrower, and runs for the try line.']},
+
+  {shape:'Y1', finish:'GREEN', group:'4 MAN', name:'4 MAN YELLOW 1', sub:'pod 1·2·3 — 2 jumps — off the top',
+   notes:['Four in the line. 1 and 4 hold, 2 and 3 walk in.','1 and 3 lift, 2 jumps at the Y1 station.','Ball down to 9, 9 back out to +1.']},
+  {shape:'Y1', finish:'ORANGE', group:'4 MAN', name:'4 MAN YELLOW 1', sub:'pod 1·2·3 — 2 jumps — drive',
+   notes:['1 and 3 lift, 2 jumps at the Y1 station.','The thrower comes in and drives at the top.','4 is the only free man in the line — he joins at the bottom.','+1 takes the middle and the ball.']},
+  {shape:'Y2', finish:'GREEN', group:'4 MAN', name:'4 MAN YELLOW 2', sub:'pod 2·3·4 — 3 jumps — off the top',
+   notes:['Four in the line. 1 and 4 hold, 2 and 3 walk in.','2 and 4 lift, 3 jumps at the Y2 station.','Ball down to 9, 9 back out to +1.']},
+  {shape:'Y2', finish:'ORANGE', group:'4 MAN', name:'4 MAN YELLOW 2', sub:'pod 2·3·4 — 3 jumps — drive',
+   notes:['2 and 4 lift, 3 jumps at the Y2 station.','The thrower comes in and drives at the top.','1 is the only free man in the line — he joins at the bottom.','+1 takes the middle and the ball.']},
+  {shape:'BOPT4', finish:'GREEN', group:'4 MAN', name:'4 MAN BLACK OPTION', sub:'pod +1·3·4 — 3 jumps — off the top to 1',
+   notes:['1 and 2 go together at the front.','1 then steps out early — straight out — and +1 comes in at the back.','Pod is +1·3·4, so 3 jumps, lifted by +1 and 4.','1 runs up as the jump is made and takes it on the move.']},
+  {shape:'BOPT4', finish:'ORANGE', group:'4 MAN', name:'4 MAN BLACK OPTION', sub:'pod +1·3·4 — 3 jumps — drive',
+   notes:['1 and 2 go together at the front, then 1 steps out early.','+1 comes in at the back — pod is +1·3·4, 3 jumps.','1 runs up and takes the ball in the middle of the maul.','The thrower drives at the top, 2 joins at the bottom.']}
 ];
 
 /* ------------------------------------------------------- timeline builder */
 const ease = t => t<0 ? 0 : t>1 ? 1 : (t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2);
 
-function podPositions(stName, pod, x){
-  const s = ST[stName];
-  return {[pod[0]]:[x, s+GAP], [pod[1]]:[x, s], [pod[2]]:[x, s-GAP]};
+function podPositions(st, pod){
+  return {[pod[0]]:[OURX, st+GAP], [pod[1]]:[OURX, st], [pod[2]]:[OURX, st-GAP]};
 }
 
 function buildTimeline(move, spaces){
-  const sh = SHAPES[move.shape], sd = SIDES[move.shape];
-  const bounce = !!sh.dummy, bopt = move.shape === 'BOPT';
+  const sh = SHAPES[move.shape], sd = SIDES[move.shape] || {};
+  const L  = LINE[sh.men];
+  const dummies = sh.dummies || (sh.dummy ? [sh.dummy] : []);
+  const nD = dummies.length;
+  const bounce = nD > 0, bopt = !!sh.stepOut, four = sh.men === 4, kiwi = !!sh.kiwi;
+  const hasMove = bounce || bopt;
   const jumper = sh.pod[1], liftTop = sh.pod[0], liftBot = sh.pod[2];
-  const station = ST[sh.st];
+  const station = sh.st;
+  const actors = L.ids.concat(['9','10','T']);
+
+  const SET = {};
+  L.ids.forEach(id => SET[id] = [OURX, L.y[id]]);
+  SET['9'] = BACKS['9']; SET['10'] = BACKS['10']; SET['T'] = THROWER;
+
+  const frontY = sh.frontPair ? 138 : L.y['1'];
+  const outPos = [28, frontY];
 
   const T = {};
-  T.set    = spaces ? 2.9 : 1.9;
-  T.ready  = T.set + (bounce ? 2.05 : 0.95);   // pod formed, ready to lift
-  T.catch  = T.ready + 0.85;
-  T.throw  = T.catch - 0.62;
-  T.lift   = T.catch - 0.58;
-  T.down   = T.catch + 0.38;
-  T.p9     = T.down  + 0.42;
-  T.p10    = T.p9    + 0.42;
-  T.bind   = T.catch + 0.34;
-  T.dr0    = T.catch + 0.62;
-  T.dr1    = T.dr0   + 1.45;
-  T.end    = (move.finish === 'ORANGE') ? T.dr1 + 0.7 : T.p10 + 0.8;
+  T.set   = spaces ? 2.9 : 1.9;
+  T.ready = T.set + (nD === 2 ? 3.25 : nD === 1 ? 2.05 : (bopt ? 1.15 : 0.95));
+  T.catch = T.ready + 0.85;
+  T.throw = T.catch - 0.62;
+  T.lift  = T.catch - 0.58;
+  T.down  = T.catch + 0.38;
+  T.p9    = T.down  + 0.42;
+  T.p10   = T.p9    + 0.42;
+  T.bind  = T.catch + 0.34;
+  T.dr0   = T.catch + (four ? 0.88 : 0.62);
+  T.dr1   = T.dr0   + 1.45;
+  T.end   = (move.finish === 'ORANGE') ? T.dr1 + 0.7 : T.p10 + 0.8;
 
-  const K = {}; LINE_MEN.concat(['9','10']).forEach(id => K[id] = []);
+  const K = {}; actors.forEach(id => K[id] = []);
   const add = (id,t,x,y,s) => {
     const k = K[id], lastT = k.length ? k[k.length-1].t : -1;
     k.push({t: Math.max(t, lastT), x, y, s: s===undefined?1:s});
   };
 
   /* ---- phase 0: walk in ------------------------------------------------ */
-  ['1','5','9','10'].forEach(id => add(id, 0, SET_POS[id][0], SET_POS[id][1]));
-  if (bopt){
-    add('1',  T.set*0.22, OURX, ST.FRONT);
-    add('1',  T.set*0.55, 28, ST.FRONT);                // out early, and just out
-    add('10', T.set*0.34, SET_POS['10'][0], SET_POS['10'][1]);
-    add('10', T.set*0.95, OURX, ST.BLACK + GAP);        // comes in as the top lifter
-  } else {
-    add('1',  T.set, SET_POS['1'][0], SET_POS['1'][1]);
-    add('10', T.set, SET_POS['10'][0], SET_POS['10'][1]);
-  }
-  ['5','9'].forEach(id => add(id, T.set, SET_POS[id][0], SET_POS[id][1]));
-
-  const movers = ['2','3','4'];
+  actors.forEach(id => add(id, 0, SET[id][0], SET[id][1]));
+  const movers = L.movers;
   if (spaces){
-    const bunch = {'2':106, '3':96, '4':86};
-    movers.forEach(id => {
-      add(id, 0.0, 31, bunch[id]);
-      add(id, 1.0, OURX, bunch[id]);          // get in, close together
-      add(id, 1.8, OURX, bunch[id]);          // wait
-      add(id, T.set - 0.2, SET_POS[id][0], SET_POS[id][1]);   // spread
+    const mid = L.y[movers[Math.floor(movers.length/2)]] || 96;
+    movers.forEach((id,i) => {
+      const by = mid + (i - (movers.length-1)/2) * -10;
+      add(id, 0.05, 31, by);
+      add(id, 1.0,  OURX, by);              // get in, close together
+      add(id, 1.8,  OURX, by);              // wait
+      add(id, T.set - 0.2, SET[id][0], SET[id][1]);   // spread
     });
   } else {
     movers.forEach(id => {
-      add(id, 0.0, 31, SET_POS[id][1]);
-      add(id, T.set - 0.25, SET_POS[id][0], SET_POS[id][1]);  // in quick
+      add(id, 0.05, 31, SET[id][1]);
+      add(id, T.set - 0.25, SET[id][0], SET[id][1]);  // in quick
     });
   }
-  movers.forEach(id => add(id, T.set, SET_POS[id][0], SET_POS[id][1]));
+  L.ids.concat(['9','T']).forEach(id => add(id, T.set, SET[id][0], SET[id][1]));
+  if (!bopt) add('10', T.set, SET['10'][0], SET['10'][1]);
 
-  /* ---- phase 2: dummy, clear-out, re-form ----------------------------- */
-  if (bounce){
-    const dpos = podPositions(sh.dummy.st, sh.dummy.pod, OURX);
-    for (const id in dpos){ add(id, T.set + 0.15, SET_POS[id][0], SET_POS[id][1]);
-                            add(id, T.set + 0.65, dpos[id][0], dpos[id][1]); }
-    // the show: dummy jumper dips and shapes, then settles
-    const dj = sh.dummy.pod[1];
-    add(dj, T.set + 0.95, dpos[dj][0], dpos[dj][1], 1.18);
-    add(dj, T.set + 1.25, dpos[dj][0], dpos[dj][1], 1.0);
-    // the man who clears out
+  /* ---- black option: front pair, 1 out early, +1 comes in -------------- */
+  if (bopt){
+    if (sh.frontPair){
+      add('1', T.set - 0.05, OURX, frontY);            // 1 and 2 go together
+      add('2', T.set - 0.02, OURX, 126);
+      add('1', T.set + 0.15, OURX, frontY);
+      add('1', T.set + 0.55, outPos[0], outPos[1]);    // then 1 steps out
+    } else {
+      add('1', T.set * 0.55, OURX, frontY);
+      add('1', T.set * 0.85, outPos[0], outPos[1]);    // out early, and just out
+    }
+    add('10', T.set * 0.34, SET['10'][0], SET['10'][1]);
+    add('10', T.set * 0.95, 33, station + GAP + 7);    // comes in, waits off the line
+
+  }
+
+  /* ---- phase 2: dummy (or dummies), clear-out, re-form ----------------- */
+  const dWin = nD === 2 ? [[0.10,0.55,0.70,1.00],[1.10,1.65,1.80,2.10]]
+                        : [[0.15,0.65,0.95,1.25]];
+  const dpos0 = nD ? podPositions(dummies[0].st, dummies[0].pod) : null;
+  dummies.forEach((d,i) => {
+    const dpos = podPositions(d.st, d.pod), w = dWin[i];
+    for (const id in dpos){
+      const from = K[id][K[id].length-1];
+      add(id, T.set + w[0], from.x, from.y);
+      add(id, T.set + w[1], dpos[id][0], dpos[id][1]);
+    }
+    const dj = d.pod[1];
+    add(dj, T.set + w[2], dpos[dj][0], dpos[dj][1], 1.18);
+    add(dj, T.set + w[3], dpos[dj][0], dpos[dj][1], 1.0);
+  });
+  if (sh.clear){
+    const dpos = podPositions(dummies[0].st, dummies[0].pod);
     add(sh.clear, T.set + 1.30, dpos[sh.clear][0], dpos[sh.clear][1]);
     add(sh.clear, T.set + 1.95, sh.clearTo[0], sh.clearTo[1]);
   }
+  if (kiwi){
+    /* 2 steps out of the front dummy, then comes back in at the 1 position */
+    add('2', T.set + 1.00, dpos0['2'][0], dpos0['2'][1]);
+    add('2', T.set + 1.55, 28, 122);
+    add('2', T.set + 1.95, 29, 132);
+    add('2', T.set + 2.60, OURX, 140);
+    /* 1 steps out of the middle dummy and sets up for the strike */
+    add('1', T.set + 2.20, K['1'][K['1'].length-1].x, K['1'][K['1'].length-1].y);
+    add('1', T.set + 2.85, 25, 128);
+  }
 
   /* ---- the real pod --------------------------------------------------- */
-  const ppos = podPositions(sh.st, sh.pod, OURX);
-  const formStart = bounce ? T.set + 1.35 : T.set + 0.25;
+  const ppos = podPositions(station, sh.pod);
+  const formStart = T.set + (nD === 2 ? 2.70 : nD === 1 ? 1.35 : 0.25);
   for (const id in ppos){
     const from = K[id][K[id].length-1];
     add(id, formStart, from.x, from.y);
     add(id, T.ready, ppos[id][0], ppos[id][1]);
   }
-  // dip, then drive up
   add(liftTop, T.lift - 0.12, ppos[liftTop][0], ppos[liftTop][1], 0.9);
   add(liftBot, T.lift - 0.12, ppos[liftBot][0], ppos[liftBot][1], 0.9);
   add(liftTop, T.catch, LIFTX, station + GAP - 2, 1);
@@ -318,27 +382,28 @@ function buildTimeline(move, spaces){
   if (move.finish === 'ORANGE'){
     const carrier = sd.carrier;
     const M = {
-      [jumper] : [OURX + 4, station],
-      [liftTop]: [OURX + 4, station + 9],
-      [liftBot]: [OURX + 4, station - 9],
-      [sd.top] : [OURX + 2, station + 19],
-      [sd.bottom]:[OURX + 2, station - 19],
-      [carrier]: [OURX - 9, station]
+      [jumper]   : [OURX + 4, station],
+      [liftTop]  : [OURX + 4, station + 9],
+      [liftBot]  : [OURX + 4, station - 9],
+      [sd.top]   : [OURX + 2, station + 19],
+      [sd.bottom]: [OURX + 2, station - 19],
+      [carrier]  : [OURX - 9, station]
     };
-    const early = sd.early;
-    const joiners = [sd.top, sd.bottom, carrier];
-    joiners.forEach(id => {
+    [sd.top, sd.bottom, carrier].forEach(id => {
       const from = K[id][K[id].length-1];
-      const leave = (id === early) ? T.set + 0.45 : T.throw - 0.05;
+      const leave  = id === 'T' ? T.throw + 0.14
+                   : id === sd.early ? T.set + 0.45 : T.throw - 0.05;
+      const arrive = id === 'T' ? T.bind + 0.42 : T.bind;
       add(id, leave, from.x, from.y);
-      if (id === early){                      // long trip round the front
-        add(id, (leave + T.bind)/2, OURX - 7, station + 30);
-      } else if (bopt && id === carrier){     // runs up as the jump is made
+      if (id === sd.early)                    // long trip round the front
+        add(id, (leave + arrive)/2, OURX - 7, station + 30);
+      else if (id === 'T')                    // in off the touchline
+        add(id, (leave + arrive)/2, OURX + 12, station + 34);
+      else if (bopt && id === carrier)        // runs up as the jump is made
         add(id, T.catch, 27, station + 16);
-      }
-      add(id, T.bind, M[id][0], M[id][1]);
+      add(id, arrive, M[id][0], M[id][1]);
     });
-    add(jumper, T.down, M[jumper][0], M[jumper][1], 1.1);
+    add(jumper,  T.down, M[jumper][0],  M[jumper][1], 1.1);
     add(liftTop, T.bind, M[liftTop][0], M[liftTop][1]);
     add(liftBot, T.bind, M[liftBot][0], M[liftBot][1]);
 
@@ -354,57 +419,74 @@ function buildTimeline(move, spaces){
   }
 
   /* ---- ball ----------------------------------------------------------- */
-  const B = [];
-  B.push({t:0, x:THROWER[0], y:THROWER[1]});
-  B.push({t:T.throw, x:THROWER[0], y:THROWER[1]});
-  B.push({t:T.catch, x:LIFTX + 4, y:station, ctrl:[46, (station + THROWER[1])/2 - 6]});
-
+  const B = [{t:0, x:THROWER[0], y:THROWER[1]},
+             {t:T.throw, x:THROWER[0], y:THROWER[1]},
+             {t:T.catch, x:LIFTX + 4, y:station, ctrl:[46, (station + THROWER[1])/2 - 6]}];
   let passes = [];
-  if (move.finish === 'GREEN' && !bopt){
+  if (move.finish === 'GREEN' && !bopt && !kiwi){
     B.push({t:T.down, x:OURX + 2, y:station});
-    B.push({t:T.p9,  x:SET_POS['9'][0],  y:SET_POS['9'][1]});
-    B.push({t:T.p10, x:SET_POS['10'][0], y:SET_POS['10'][1]});
-    passes = [{t:T.p9,  from:[OURX+2, station], to:SET_POS['9']},
-              {t:T.p10, from:SET_POS['9'],      to:SET_POS['10']}];
+    B.push({t:T.p9,  x:BACKS['9'][0],  y:BACKS['9'][1]});
+    B.push({t:T.p10, x:BACKS['10'][0], y:BACKS['10'][1]});
+    passes = [{t:T.p9,  from:[OURX+2, station], to:BACKS['9']},
+              {t:T.p10, from:BACKS['9'],        to:BACKS['10']}];
+  } else if (kiwi){
+    /* 1 strikes into the gap between RED and the thrower */
+    add('1', T.throw - 0.05, 25, 128);
+    add('1', T.catch, 33, 140);
+    add('1', T.down + 0.26, 45, 147);
+    add('1', T.down + 0.95, 67, 150);
+    add('1', T.down + 1.80, 93, 151);
+    B.push({t:T.down, x:OURX + 4, y:station});
+    B.push({t:T.down + 0.26, x:48, y:145});
+    B.push({t:T.down + 0.95, x:70, y:148});
+    B.push({t:T.down + 1.80, x:96, y:149});
+    passes = [{t:T.down + 0.26, from:[OURX+4, station], to:[45,147]}];
+    T.end = T.down + 2.55;
   } else if (move.finish === 'GREEN'){
     /* black option: 1 runs up as the jump is made and takes it on the move */
-    add('1', T.throw - 0.05, 28, ST.FRONT);
+    add('1', T.throw - 0.05, outPos[0], outPos[1]);
     add('1', T.catch, 27, station + 16);
-    add('1', T.down + 0.30, 26, station - 2);
-    add('1', T.down + 0.95, 37, station - 14);
-    add('1', T.down + 1.65, 57, station - 24);
+    add('1', T.down + 0.30, 26, station - 2);   // takes it on the move
+    add('1', T.down + 1.05, 29, 41);            // up past the tail, outside the defence
+    add('1', T.down + 1.80, 60, 36);            // then straight forward
+    add('1', T.down + 2.55, 93, 34);
     B.push({t:T.down, x:OURX + 2, y:station});
     B.push({t:T.down + 0.30, x:29, y:station - 4});
-    B.push({t:T.down + 0.95, x:40, y:station - 16});
-    B.push({t:T.down + 1.65, x:60, y:station - 26});
+    B.push({t:T.down + 1.05, x:32, y:39});
+    B.push({t:T.down + 1.80, x:63, y:34});
+    B.push({t:T.down + 2.55, x:96, y:32});
     passes = [{t:T.down + 0.30, from:[OURX+2, station], to:[26, station - 2]}];
-    T.end = T.down + 2.35;
+    T.end = T.down + 3.20;
   } else {
     B.push({t:T.bind, x:OURX - 5, y:station - 4});
     B.push({t:T.dr0,  x:OURX - 5, y:station - 4});
     B.push({t:T.dr1,  x:OURX - 5 + 16, y:station - 4});
   }
 
-  /* ---- opposition: they group where they think we are lifting --------- */
-  const readSt = ST[bounce ? sh.dummy.st : sh.st];
-  const O = [];
-  const oppSet = [ST.FRONT, ST.RED, ST.YELLOW, ST.BLACK, ST.BACK];
-  const oppEnd = [ST.FRONT, readSt + GAP, readSt, readSt - GAP, ST.BACK];
-  for (let i=0;i<5;i++) O.push([{t:0,y:oppSet[i]},{t:T.set-0.5,y:oppSet[i]},{t:T.set+0.5,y:oppEnd[i]}]);
+  /* ---- opposition ----------------------------------------------------- */
+  const reads = nD ? dummies.map(d => d.st) : [station];
+  const cluster = r => four
+    ? [L.y['1'], r + 11, r - 11, Math.min(L.y['4'], r - 24)]
+    : [L.y['1'], r + GAP, r, r - GAP, L.y['5']];
+  const oppSet = L.ids.map(id => L.y[id]);
+  const O = oppSet.map((y,i) => {
+    const kf = [{t:0,y}, {t:T.set-0.5,y}];
+    reads.forEach((r,j) => kf.push({t:T.set + 0.6 + j*1.35, y:cluster(r)[i]}));
+    return kf;
+  });
 
-  const phases = [
-    ['WALK IN', 0], ['SET', T.set], ['MOVE', T.set+0.2],
-    ['THROW', T.throw], ['LIFT', T.lift], ['CATCH', T.catch],
-    ['FINISH', T.down], ['HOLD', T.end - 0.35]
-  ];
-  if (!bounce) phases.splice(2,1);
+  const phases = [['WALK IN',0], ['SET',T.set], ['MOVE',T.set+0.2],
+                  ['THROW',T.throw], ['LIFT',T.lift], ['CATCH',T.catch],
+                  ['FINISH',T.down], ['HOLD',T.end - 0.35]];
+  if (!hasMove) phases.splice(2,1);
 
-  return {K, B, O, maul, passes, T, phases, dur:T.end, jumper, station};
+  return {K, B, O, maul, passes, T, phases, dur:T.end, jumper, station,
+          actors, chips:L.chips, men:sh.men};
 }
 
 /* ---------------------------------------------------------------- sampling */
 function sample(kfs, t){
-  if (!kfs.length) return null;
+  if (!kfs || !kfs.length) return null;
   if (t <= kfs[0].t) return {...kfs[0]};
   for (let i=0;i<kfs.length-1;i++){
     const a = kfs[i], b = kfs[i+1];
@@ -414,8 +496,7 @@ function sample(kfs, t){
       if (b.ctrl){                               // quadratic (ball flight)
         const m = 1-u;
         return {x: m*m*a.x + 2*m*u*b.ctrl[0] + u*u*b.x,
-                y: m*m*a.y + 2*m*u*b.ctrl[1] + u*u*b.y,
-                s: 1, moving:true};
+                y: m*m*a.y + 2*m*u*b.ctrl[1] + u*u*b.y, s:1, moving:true};
       }
       return {x: a.x + (b.x-a.x)*u, y: a.y + (b.y-a.y)*u,
               s: (a.s??1) + ((b.s??1)-(a.s??1))*u,
@@ -432,41 +513,38 @@ let tl = null, playing = true, clock = 0, last = 0;
 
 const VMIN = 26, VMAX = 180;
 const Y = y => flip ? (VMIN + VMAX - y) : y;
-const R = {'1':5.4,'2':5.4,'3':5.4,'4':5.4,'5':5.4,'9':4.9,'10':4.9};
+const radius = id => id === 'T' ? 4.6 : (id === '9' || id === '10') ? 4.9 : 5.4;
+const label  = id => id === '10' ? '+1' : id === 'T' ? 'T' : id;
 
-function chipsAndPitch(){
+function pitch(){
   const o = [];
   o.push(`<rect x="0" y="0" width="100" height="180" fill="#eef2ea"/>`);
   o.push(`<rect x="0" y="${Math.min(Y(0),Y(TOUCH_Y))}" width="100" height="${TOUCH_Y}" fill="#dfe8d9"/>`);
   o.push(`<line x1="0" y1="${Y(TOUCH_Y)}" x2="100" y2="${Y(TOUCH_Y)}" stroke="#fff" stroke-width="2.2"/>`);
-  [['5m',ST.FRONT],['15m',ST.BACK]].forEach(([l,y])=>{
+  [['5m',140],['15m',52]].forEach(([l,y])=>{
     o.push(`<line x1="24" y1="${Y(y)}" x2="90" y2="${Y(y)}" stroke="#fff" stroke-width=".6" stroke-dasharray="2 2"/>`);
     o.push(`<text x="92" y="${Y(y)+1.2}" font-size="2.8" fill="#9aab95">${l}</text>`);
   });
   o.push(`<rect x="48" y="${Math.min(Y(42),Y(156))}" width="14" height="114" fill="#fff" opacity=".4"/>`);
-  const target = tl ? tl.station : null;
-  [['RED',ST.RED,'#dc2626','#fff'],['YELLOW',ST.YELLOW,'#eab308','#3f2d00'],['BLACK',ST.BLACK,'#111827','#fff']]
-    .forEach(([n,y,bg,fg])=>{
-      const on = target === y;
-      o.push(`<rect x="49" y="${Y(y)-2.8}" width="12.4" height="5.6" rx="1.3" fill="${bg}" opacity="${on?1:.28}"/>`);
-      o.push(`<text x="55.2" y="${Y(y)+1.2}" text-anchor="middle" font-size="${n==='YELLOW'?2.7:3.1}" font-weight="700" fill="${fg}" opacity="${on?1:.45}">${n}</text>`);
-    });
+  tl.chips.forEach(([n,y,bg,fg])=>{
+    const on = tl.station === y;
+    o.push(`<rect x="49" y="${Y(y)-2.8}" width="12.4" height="5.6" rx="1.3" fill="${bg}" opacity="${on?1:.28}"/>`);
+    o.push(`<text x="55.2" y="${Y(y)+1.2}" text-anchor="middle" font-size="${n.length>3?2.7:3.1}"
+             font-weight="700" fill="${fg}" opacity="${on?1:.45}">${n}</text>`);
+  });
   return o.join('');
 }
 
 function draw(t){
-  const o = [chipsAndPitch()];
-  const mv = MOVES[idx];
+  const o = [pitch()];
 
-  /* opposition */
   tl.O.forEach(kf => {
-    const p = sample(kf.map(k=>({t:k.t,x:OPPX,y:k.y})), t);
+    const p = sample(kf.map(k=>({t:k.t, x:OPPX, y:k.y})), t);
     o.push(`<circle cx="${OPPX}" cy="${Y(p.y)}" r="5" fill="none" stroke="#94a3b8" stroke-width="1.2"/>`);
   });
 
-  /* maul block */
   if (tl.maul && t >= tl.maul.t0){
-    const pts = tl.maul.members.map(id => sample(tl.K[id], t));
+    const pts = tl.maul.members.map(id => sample(tl.K[id], t)).filter(Boolean);
     const xs = pts.map(p=>p.x), ys = pts.map(p=>p.y);
     const x0 = Math.min(...xs)-7, x1 = Math.max(...xs)+7;
     const y0 = Math.min(...ys)-7, y1 = Math.max(...ys)+7;
@@ -479,13 +557,11 @@ function draw(t){
     }
   }
 
-  /* our players */
-  const order = LINE_MEN.concat(['9','10']);
-  order.forEach(id => {
+  ['T'].concat(tl.actors.filter(id => id !== 'T')).forEach(id => {
     const p = sample(tl.K[id], t);
     if (!p) return;
     const isJ = id === tl.jumper && p.s > 1.12;
-    const r = R[id] * (isJ ? p.s : 1);
+    const r  = radius(id) * (isJ ? p.s : 1);
     const cx = p.x, cy = Y(p.y);
     if (p.moving){
       const prev = sample(tl.K[id], Math.max(0, t-0.28));
@@ -493,15 +569,17 @@ function draw(t){
                stroke-dasharray="1.4 1.6" opacity=".65" marker-end="url(#mArrow)"/>`);
     }
     if (isJ) o.push(`<ellipse cx="${cx}" cy="${cy+r+2.4}" rx="${r*0.75}" ry="1.5" fill="#0f172a" opacity=".18"/>`);
-    const fill = isJ ? '#0f766e' : (id==='9'||id==='10' ? '#1e3a5f' : '#1e3a5f');
-    const stroke = (id==='9'||id==='10') ? ' stroke="#16a34a" stroke-width="1.1"' :
-                   (isJ ? ' stroke="#fff" stroke-width="1"' : '');
-    o.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}"${stroke}/>`);
-    o.push(`<text x="${cx}" y="${cy + r*0.32}" text-anchor="middle" font-size="${(id==='10'?3.9:4.4)*(isJ?1.2:1)}"
-             font-weight="800" fill="#fff">${id}</text>`);
+    const stroke = (id==='9'||id==='10') ? ' stroke="#16a34a" stroke-width="1.1"'
+                 : (isJ ? ' stroke="#fff" stroke-width="1"' : '');
+    o.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${isJ ? '#0f766e' : '#1e3a5f'}"${stroke}/>`);
+    const fs = (id==='10' ? 3.7 : id==='T' ? 3.8 : 4.4) * (isJ ? 1.2 : 1);
+    o.push(`<text x="${cx}" y="${cy + r*0.32}" text-anchor="middle" font-size="${fs}"
+             font-weight="800" fill="#fff">${label(id)}</text>`);
+    if (id === 'T' && Math.abs(p.x - THROWER[0]) + Math.abs(p.y - THROWER[1]) < 1)
+      o.push(`<text x="${cx}" y="${cy + (flip ? -6.6 : 8.4)}" text-anchor="middle" font-size="2.9"
+               font-weight="700" fill="#5b6b7a">THROWER</text>`);
   });
 
-  /* pass lines */
   tl.passes.forEach(p => {
     if (t >= p.t - 0.42 && t < p.t + 0.9){
       const a = t < p.t ? 1 : Math.max(0, 1-(t-p.t)/0.9);
@@ -510,15 +588,10 @@ function draw(t){
     }
   });
 
-  /* thrower + ball */
-  o.push(`<circle cx="${THROWER[0]}" cy="${Y(THROWER[1])}" r="4.6" fill="#1e3a5f"/>`);
-  o.push(`<text x="${THROWER[0]}" y="${Y(THROWER[1]) + (flip ? -6.6 : 8.4)}" text-anchor="middle"
-           font-size="2.9" font-weight="700" fill="#5b6b7a" letter-spacing=".1">THROWER</text>`);
   const b = sample(tl.B, t);
   o.push(`<ellipse cx="${b.x}" cy="${Y(b.y)}" rx="1.7" ry="2.4" fill="#a16207" stroke="#fff" stroke-width=".5"
            transform="rotate(${flip?-25:25} ${b.x} ${Y(b.y)})"/>`);
 
-  /* attack arrow */
   o.push(`<line x1="79" y1="${Y(172)}" x2="93" y2="${Y(172)}" stroke="#c2410c" stroke-width="1.2" marker-end="url(#mDrive)" opacity=".8"/>`);
   o.push(`<text x="86" y="${Y(172)+(flip?5:-3)}" text-anchor="middle" font-size="2.8" font-weight="700" fill="#c2410c" opacity=".85">ATTACK</text>`);
 
@@ -532,13 +605,16 @@ function paintChrome(){
   el('callname').textContent = mv.name;
   const chip = el('chip'); chip.textContent = mv.finish; chip.className = 'chip ' + mv.finish;
   el('sub').textContent = mv.sub;
-  el('dots').innerHTML = MOVES.map((_,i)=>
-    `<button class="dotbtn${i===idx?' on':''}" data-i="${i}" aria-label="Call ${i+1}"><span class="dot"></span></button>`).join('');
-  el('pklist').innerHTML = MOVES.map((m,i)=>
-    `<button class="pkitem${i===idx?' on':''}" data-i="${i}">
+  el('dots').innerHTML = MOVES.map((m,i)=>
+    `<button class="dotbtn${i===idx?' on':''}${m.group==='4 MAN'?' four':''}" data-i="${i}" aria-label="Call ${i+1}"><span class="dot"></span></button>`).join('');
+  let last = null;
+  el('pklist').innerHTML = MOVES.map((m,i)=>{
+    const head = m.group !== last ? `<div class="pkgroup">${m.group} LINEOUT</div>` : '';
+    last = m.group;
+    return head + `<button class="pkitem${i===idx?' on':''}" data-i="${i}">
        <span class="pkno">${i+1}</span><span>${m.name}</span>
-       <span class="chip ${m.finish}" style="margin-left:auto">${m.finish}</span>
-     </button>`).join('');
+       <span class="chip ${m.finish}" style="margin-left:auto">${m.finish}</span></button>`;
+  }).join('');
   el('notes').innerHTML = `<h4>${mv.name} · ${mv.finish}</h4><ul>${mv.notes.map(n=>`<li>${n}</li>`).join('')}</ul>`;
   el('ticks').innerHTML = tl.phases.map(p=>`<span class="tick" style="left:${(p[1]/tl.dur*100).toFixed(2)}%"></span>`).join('');
   el('phaserow').innerHTML = tl.phases.map(p=>`<span>${p[0]}</span>`).join('');
@@ -566,11 +642,10 @@ function frame(ts){
   requestAnimationFrame(frame);
 }
 
-/* controls */
-el('bPlay').onclick = () => { clock = 0; playing = true; };
-el('bPrev').onclick = () => load(idx - 1, false);
-el('bNext').onclick = () => load(idx + 1, false);
-el('bPick').onclick = () => el('picker').classList.add('show');
+el('bPlay').onclick  = () => { clock = 0; playing = true; };
+el('bPrev').onclick  = () => load(idx - 1, false);
+el('bNext').onclick  = () => load(idx + 1, false);
+el('bPick').onclick  = () => el('picker').classList.add('show');
 el('pkclose').onclick = () => el('picker').classList.remove('show');
 el('picker').addEventListener('click', e => { if (e.target === el('picker')) el('picker').classList.remove('show'); });
 el('pklist').addEventListener('click', e => {
@@ -582,7 +657,7 @@ el('dots').addEventListener('click', e => {
   load(+b.dataset.i, false);
 });
 el('bSpeed').onclick = e => { speed = speed===1 ? 0.5 : 1; e.target.innerHTML = speed===1 ? '1&times;' : '0.5&times;'; e.target.classList.toggle('on', speed!==1); };
-el('bFlip').onclick = e => { flip = !flip; e.target.classList.toggle('on', flip); };
+el('bFlip').onclick  = e => { flip = !flip; e.target.classList.toggle('on', flip); };
 el('bSetup').onclick = e => { spaces = !spaces; e.target.textContent = spaces ? 'SPACES' : 'DYNAMIC'; e.target.classList.toggle('on', spaces); load(idx,false); };
 el('bNotes').onclick = e => { el('notes').classList.toggle('show'); e.target.classList.toggle('on'); };
 
@@ -619,7 +694,7 @@ addEventListener('keydown', e => {
   if (e.key === 'f') el('bFlip').click();
 });
 
-/* deep link for a shareable view: #top / #spaces / #4 */
+/* deep link: #top / #spaces / #12 */
 (function(){
   const h = location.hash.slice(1).split(/[,&]/);
   if (h.includes('top')) { flip = true; el('bFlip').classList.add('on'); }
@@ -629,8 +704,7 @@ addEventListener('keydown', e => {
 })();
 requestAnimationFrame(frame);
 
-/* test hook for headless checking */
-window.__lo = { load:(i,t)=>{ load(i,false); clock = t; playing=false; draw(clock); },
+window.__lo = { load:(i,t)=>{ load(i,false); clock=t; playing=false; draw(clock); },
                 at:(t)=>{ clock=t; playing=false; draw(t); },
                 tl:()=>tl, moves:MOVES, setFlip:v=>{flip=v}, setSpaces:v=>{spaces=v} };
 </script>

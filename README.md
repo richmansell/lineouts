@@ -3,18 +3,18 @@
 An animated 5-man lineout playbook. One page, no build step, no dependencies,
 works offline.
 
-**Live:** https://richmansell.github.io/lineouts/
+**Live:** https://YOUR-USERNAME.github.io/lineout-moves/
 
 ## What's in it
 
-Eleven calls — red / yellow / black, both bounces and black option, with green
-and orange finishes. Each one animates the walk-in, the set, the throw, the lift
+Seventeen calls. Five-man: red, yellow, black, both bounces, black option and kiwi.
+Four-man: yellow 1, yellow 2 and black option. Green and orange finishes. Each one animates the walk-in, the set, the throw, the lift
 and the finish.
 
 | Control | Does |
 |---|---|
 | ‹ › | Previous / next call |
-| Call name | Opens the full list of 11 calls |
+| Call name | Opens the full list, grouped five-man / four-man |
 | Dots | Jump straight to a call |
 | Swipe / drag on the pitch | Previous / next call |
 | Tap the pitch | Pause / play |

@@ -1,7 +1,11 @@
 # Lineout Moves — Single Page Web App
 
-**Spec v0.6 — built. 10 Aug 2026**
+**Spec v0.9 — built. 10 Aug 2026**
 
+v0.9 = black option receiver reroutes up past the tail before running forward.
+v0.8 = KIWI added — two dummies then a front-ball strike.
+v0.7 = RED GREEN removed; four-man lineout added (6 calls); the 10 renamed **+1**
+throughout; the thrower joins every four-man drive.
 v0.6 = 10 dropped behind the 9 (no forward pass); black option 1 runs onto the
 ball; black option carry renamed GREEN.
 v0.5 = proper call navigation (prev/next, call list, tappable dots, mouse-drag swipe).
@@ -37,7 +41,7 @@ opposition on the right, attack to the right. viewBox `0 26 100 154`.
 
 | Actor | x | y |
 |---|---|---|
-| Thrower (no shirt number shown — 1–5 are the line) | 54 | 170 |
+| Thrower (**T** — joins every four-man drive) | 54 | 170 |
 | Touchline | — | 160 |
 | **1** — front man (5m) | 42 | 140 |
 | **2** — RED station | 42 | 118 |
@@ -46,9 +50,23 @@ opposition on the right, attack to the right. viewBox `0 26 100 154`.
 | **5** — back man (15m) | 42 | 52 |
 | Opposition ×5 | 68 | mirrored |
 | 9 | 19 | 94 (near yellow, off to the left) |
-| 10 | 6 | 50 (beyond the tail **and behind the 9** — the pass has to go back) |
+| **+1** | 6 | 50 (beyond the tail **and behind the 9** — the pass has to go back) |
 
 Pod members close to ~12 units (≈1.4m) apart against the 22-unit station spacing.
+
+### Four-man lineout
+
+Same pitch, four in the line. **1 and 4 hold, 2 and 3 walk in.**
+
+| Man | y | Station |
+|---|---|---|
+| **1** | 134 | — |
+| **2** | 110 | **Y1** |
+| **3** | 86 | **Y2** |
+| **4** | 62 | — |
+
+Opposition drop to four as well. The black option jump sits at **74 (B)**, at
+the back.
 
 ### Orientation toggle
 
@@ -62,8 +80,11 @@ authored once. **Default: throw at the bottom.**
 
 ## 3. Notation
 
-Our five are **1 · 2 · 3 · 4 · 5**, front to back. 1 and 5 are static in the
-line; 2, 3, 4 walk in.
+Our men are numbered front to back. In a five-man line, 1 and 5 are static and
+2, 3, 4 walk in; in a four-man line, 1 and 4 are static and 2, 3 walk in.
+
+The extra forward who comes in — or stands out as the receiver on a green — is
+shown as **+1**, never as a shirt number.
 
 > **A pod is three numbers and the middle one jumps.** The outer two lift.
 
@@ -74,32 +95,46 @@ line; 2, 3, 4 walk in.
 | BLACK | — | **3 · 4 · 5** | 4 | BLACK |
 | RED BOUNCE YELLOW | 1 · 2 · 3 at RED | **1 · 2 · 4** | 2 | **YELLOW** |
 | YELLOW BOUNCE RED | 2 · 3 · 4 at YELLOW | **1 · 3 · 4** | 3 | **RED** |
-| BLACK OPTION | — | **10 · 4 · 5** | 4 | BLACK |
+| BLACK OPTION | — | **+1 · 4 · 5** | 4 | BLACK |
+| 4 MAN YELLOW 1 | — | **1 · 2 · 3** | 2 | Y1 |
+| 4 MAN YELLOW 2 | — | **2 · 3 · 4** | 3 | Y2 |
+| 4 MAN BLACK OPTION | — | **+1 · 3 · 4** | 3 | B (at the back) |
+| KIWI | 1 · 2 · 3 at RED, then 1 · 3 · 4 at YELLOW | **2 · 3 · 4** | 3 | RED |
 
 A bounce is **one station's shift**, and the man who showed for the dummy is the
 man who jumps. The third man of the dummy clears out to the left.
 
 ---
 
-## 4. The deck — 11 moves
+## 4. The deck — 17 moves
 
 **GREEN** = off the top; ball goes to **9**, who passes back out to **10** standing
 beyond the tail of the lineout — unless the call states otherwise.
 **ORANGE** = drive. Black is only driven as BLACK OPTION.
 
+**RED GREEN is not in the deck — it is never done.**
+
 | # | Call | Finish |
 |---|---|---|
-| 1 | RED | GREEN |
-| 2 | RED | ORANGE |
-| 3 | YELLOW | GREEN |
-| 4 | YELLOW | ORANGE |
-| 5 | BLACK | GREEN |
-| 6 | RED BOUNCE YELLOW | GREEN |
-| 7 | RED BOUNCE YELLOW | ORANGE |
-| 8 | YELLOW BOUNCE RED | GREEN |
-| 9 | YELLOW BOUNCE RED | ORANGE |
-| 10 | BLACK OPTION | GREEN |
-| 11 | BLACK OPTION | drive |
+| | **Five man** | |
+| 1 | RED | ORANGE |
+| 2 | YELLOW | GREEN |
+| 3 | YELLOW | ORANGE |
+| 4 | BLACK | GREEN |
+| 5 | RED BOUNCE YELLOW | GREEN |
+| 6 | RED BOUNCE YELLOW | ORANGE |
+| 7 | YELLOW BOUNCE RED | GREEN |
+| 8 | YELLOW BOUNCE RED | ORANGE |
+| 9 | BLACK OPTION | GREEN |
+| 10 | BLACK OPTION | ORANGE |
+| 11 | KIWI | GREEN |
+| | **Four man** | |
+| 12 | 4 MAN YELLOW 1 | GREEN |
+| 13 | 4 MAN YELLOW 1 | ORANGE |
+| 14 | 4 MAN YELLOW 2 | GREEN |
+| 15 | 4 MAN YELLOW 2 | ORANGE |
+| 16 | 4 MAN BLACK OPTION | GREEN |
+| 17 | 4 MAN BLACK OPTION | ORANGE |
 
 ---
 
@@ -108,16 +143,23 @@ beyond the tail of the lineout — unless the call states otherwise.
 > **Every drive is the jumping pod, a man pushing in on each side, and the
 > additional man taking the ball in the middle.**
 
-The additional man is the **10** — a forward on any orange. On BLACK OPTION he
-is the original **1**, who has already stepped out of the line.
+The additional man is the **+1** — a forward on any orange. On either black
+option he is the original **1**, who has already stepped out of the line.
+
+**On every four-man drive the thrower comes in and drives**, taking the top.
+That is what fills the second side, since a four-man line only leaves one free
+man.
 
 | Call | Pod | Top (throw end) | Bottom (far end) | Ball in the middle |
 |---|---|---|---|---|
-| RED | 1 · 2 · 3 | **4** | **5** | 10 |
-| YELLOW | 2 · 3 · 4 | **1** | **5** | 10 |
-| RED BOUNCE YELLOW | 1 · 2 · 4 | **5** — leaves early | **3** | 10 |
-| YELLOW BOUNCE RED | 1 · 3 · 4 | **2** | **5** | 10 |
-| BLACK OPTION | 10 · 4 · 5 | **2** | **3** | 1 |
+| RED | 1 · 2 · 3 | **4** | **5** | +1 |
+| YELLOW | 2 · 3 · 4 | **1** | **5** | +1 |
+| RED BOUNCE YELLOW | 1 · 2 · 4 | **5** — leaves early | **3** | +1 |
+| YELLOW BOUNCE RED | 1 · 3 · 4 | **2** | **5** | +1 |
+| BLACK OPTION | +1 · 4 · 5 | **2** | **3** | 1 |
+| 4 MAN YELLOW 1 | 1 · 2 · 3 | **thrower** | **4** | +1 |
+| 4 MAN YELLOW 2 | 2 · 3 · 4 | **thrower** | **1** | +1 |
+| 4 MAN BLACK OPTION | +1 · 3 · 4 | **thrower** | **2** | 1 |
 
 **Red bounce yellow is the only one where 5 makes the long trip.** He is
 uninvolved from the start, so he leaves early and gets to the top, near the
@@ -169,19 +211,59 @@ point of the move. No contest in v1.
 
 ---
 
-## 9. Black option
+## 9. Black option — five man
 
-1. The **10 is a forward** and comes into the line with the three.
-2. **1 moves out first**, so it is legally a five-man lineout — 2, 3, 4, 5 + 10.
-3. 1 takes the 10 role out in the channel.
-4. **4 jumps**, lifted by **10** (top) and **5** (bottom).
+1. The **+1 is a forward** and comes into the line.
+2. **1 moves out first**, so it is legally a five-man lineout — 2, 3, 4, 5 + the +1.
+3. 1 takes the receiver role out in the channel.
+4. **4 jumps**, lifted by the **+1** (top) and **5** (bottom).
 5. **1 moves out early — straight out**, staying level with the front of the
    lineout. Not out and up.
 6. As the jump is made he **runs up**, so he arrives onto the ball dynamically
    rather than standing waiting for it.
-7. **GREEN** — off the top to 1 on the move, he takes it running at the line.
+7. **GREEN** — off the top to 1 on the move. He runs **up past the tail of the
+   lineout**, outside their defence, then straight forward for the try line.
+   He does not cut back across the front — that runs him straight into them.
 8. **ORANGE** — the same run, but he arrives into the middle of the maul with the
    ball. 2 joins the top, 3 the bottom.
+
+---
+
+## 9a. Black option — four man
+
+1. **1 and 2 go together at the front.**
+2. **1 then steps out early — straight out** — keeping it legally four in the
+   line once the +1 arrives.
+3. The **+1 comes in at the back**. Pod is **+1 · 3 · 4**, so **3 jumps**,
+   lifted by the +1 at the top and 4 at the bottom.
+4. As the jump is made, 1 **runs up** onto the ball.
+5. **GREEN** — he takes it on the move, runs **up past the tail** to get outside
+   their defence, then straight forward for the try line.
+6. **ORANGE** — he arrives with the ball into the middle of the maul; the
+   thrower drives at the top and 2 joins at the bottom.
+
+---
+
+## 9b. KIWI — five man
+
+The long one. Two dummies, a swap in the line, and a front-ball strike into the
+gap between the front man and the thrower.
+
+1. **1 · 2 · 3 dummy at the front** (RED). 2 shows.
+2. **2 steps out** of the line to the left.
+3. **1 · 3 · 4 dummy in the middle** (YELLOW). 3 shows.
+4. **2 comes back in to the 1 position** at the front of the line.
+5. **1 steps out.**
+6. **Pod is 2 · 3 · 4, lifting at RED** — 3 jumps, with 2 in front of him and 4
+   behind.
+7. **1 takes the ball dynamically in the gap between RED and the thrower** and
+   runs for the try line.
+
+The opposition follow both dummies — they group at RED, shift to YELLOW, and are
+left there when the ball goes to the front. That's the whole point of the call
+and the animation makes it obvious.
+
+No orange variant is defined. If you want one it's a data change.
 
 ---
 
@@ -191,7 +273,8 @@ Single HTML file, portrait, SVG, no dependencies, no browser storage. Works
 offline and can be added to the home screen.
 
 - **&#8249; and &#8250; buttons** either side of the call name — previous / next call.
-- **Tap the call name** — opens a list of all 11 calls, pick any one directly.
+- **Tap the call name** — opens the full list, grouped into five-man and
+  four-man, pick any one directly.
 - **Dots** under the title are tappable and show position in the deck.
 - **Swipe left / right** on the pitch also changes call (mouse drag works too).
 - **Tap the pitch** — pause / play. **Swipe up** or **NOTES** — coaching points.
@@ -216,7 +299,7 @@ buildTimeline(roles, finish) -> Actor[]   // {t, x, y, scale} keyframes
 ```
 
 Timelines are built in model space; orientation is applied at draw time by
-`Y()`. Eleven data objects, one renderer, one clock. A new call is a data
+`Y()`. Seventeen data objects, one renderer, one clock. A new call is a data
 change, not a code change.
 
 ---
