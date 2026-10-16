@@ -7,14 +7,19 @@ works offline.
 
 ## What's in it
 
-Seventeen calls. Five-man: red, yellow, black, both bounces, black option and kiwi.
-Four-man: yellow 1, yellow 2 and black option. Green and orange finishes. Each one animates the walk-in, the set, the throw, the lift
-and the finish.
+Twenty calls. Five-man: red, yellow, black, both bounces, black option and three
+kiwis (full, yellow, red). Four-man: yellow 1, yellow 2 and black option. Green and
+orange finishes. Each one animates the walk-in, the set, the throw, the lift and
+the finish.
+
+The app opens on **THIS WEEK** — the calls we're running this week. Everything
+else is under **ALL CALLS** in the call list. To change this week's calls, set
+`week:true` on the moves you want in `MOVES`.
 
 | Control | Does |
 |---|---|
-| ‹ › | Previous / next call |
-| Call name | Opens the full list, grouped five-man / four-man |
+| ‹ › | Previous / next call (within this week, or all calls) |
+| Call name | Opens the list: this week, then ALL CALLS (tap to expand) |
 | Dots | Jump straight to a call |
 | Swipe / drag on the pitch | Previous / next call |
 | Tap the pitch | Pause / play |
@@ -28,7 +33,8 @@ and the finish.
 
 Share a specific view:
 
-- `#7` — open on call 7
+- `#7` — open on call 7 (the number in the call list)
+- `#all` — open on the full deck rather than this week
 - `#top` — throw at the top
 - `#spaces` — SPACES walk-in
 - `#top,spaces,7` — all three

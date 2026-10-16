@@ -1,7 +1,11 @@
 # Lineout Moves — Single Page Web App
 
-**Spec v0.9 — built. 10 Aug 2026**
+**Spec v1.0 — built. 16 Oct 2026**
 
+v1.0 = THIS WEEK deck (default) with everything else under ALL CALLS; red bounce
+yellow changed to pod 1·4·5 (1 bounces back, 2 and 3 hold at RED); KIWI split
+into KIWI FULL, KIWI YELLOW (green and orange) and KIWI RED (orange); kiwi starts
+set, no walk-in.
 v0.9 = black option receiver reroutes up past the tail before running forward.
 v0.8 = KIWI added — two dummies then a front-ball strike.
 v0.7 = RED GREEN removed; four-man lineout added (6 calls); the 10 renamed **+1**
@@ -93,20 +97,28 @@ shown as **+1**, never as a shirt number.
 | RED | — | **1 · 2 · 3** | 2 | RED |
 | YELLOW | — | **2 · 3 · 4** | 3 | YELLOW |
 | BLACK | — | **3 · 4 · 5** | 4 | BLACK |
-| RED BOUNCE YELLOW | 1 · 2 · 3 at RED | **1 · 2 · 4** | 2 | **YELLOW** |
+| RED BOUNCE YELLOW | 1 · 2 · 3 at RED | **1 · 4 · 5** | 4 | **YELLOW** |
 | YELLOW BOUNCE RED | 2 · 3 · 4 at YELLOW | **1 · 3 · 4** | 3 | **RED** |
 | BLACK OPTION | — | **+1 · 4 · 5** | 4 | BLACK |
 | 4 MAN YELLOW 1 | — | **1 · 2 · 3** | 2 | Y1 |
 | 4 MAN YELLOW 2 | — | **2 · 3 · 4** | 3 | Y2 |
 | 4 MAN BLACK OPTION | — | **+1 · 3 · 4** | 3 | B (at the back) |
-| KIWI | 1 · 2 · 3 at RED, then 1 · 3 · 4 at YELLOW | **2 · 3 · 4** | 3 | RED |
+| KIWI FULL | 1 · 2 · 3 at RED, then 1 · 3 · 4 at YELLOW | **2 · 3 · 4** | 3 | RED |
+| KIWI YELLOW | 1 · 2 · 3 at RED | **1 · 3 · 4** | 3 | YELLOW |
+| KIWI RED | 1 · 2 · 3 at RED, then 1 · 3 · 4 at YELLOW | **2 · 3 · 4** | 3 | RED |
 
-A bounce is **one station's shift**, and the man who showed for the dummy is the
-man who jumps. The third man of the dummy clears out to the left.
+A bounce is **one station's shift**. On yellow bounce red the man who showed for
+the dummy is the man who jumps, and the third man of the dummy clears out to the
+left.
+
+**Red bounce yellow is the bounce with the back lifter involved.** 1 · 2 · 3 show
+at RED. 1 bounces out of the dummy and slides back behind the line to YELLOW;
+2 and 3 hold at RED, so the opposition stay with them. 4 steps up and jumps at
+YELLOW, lifted by 1 at the top and 5 at the bottom.
 
 ---
 
-## 4. The deck — 17 moves
+## 4. The deck — 20 moves
 
 **GREEN** = off the top; ball goes to **9**, who passes back out to **10** standing
 beyond the tail of the lineout — unless the call states otherwise.
@@ -114,27 +126,35 @@ beyond the tail of the lineout — unless the call states otherwise.
 
 **RED GREEN is not in the deck — it is never done.**
 
-| # | Call | Finish |
-|---|---|---|
-| | **Five man** | |
-| 1 | RED | ORANGE |
-| 2 | YELLOW | GREEN |
-| 3 | YELLOW | ORANGE |
-| 4 | BLACK | GREEN |
-| 5 | RED BOUNCE YELLOW | GREEN |
-| 6 | RED BOUNCE YELLOW | ORANGE |
-| 7 | YELLOW BOUNCE RED | GREEN |
-| 8 | YELLOW BOUNCE RED | ORANGE |
-| 9 | BLACK OPTION | GREEN |
-| 10 | BLACK OPTION | ORANGE |
-| 11 | KIWI | GREEN |
-| | **Four man** | |
-| 12 | 4 MAN YELLOW 1 | GREEN |
-| 13 | 4 MAN YELLOW 1 | ORANGE |
-| 14 | 4 MAN YELLOW 2 | GREEN |
-| 15 | 4 MAN YELLOW 2 | ORANGE |
-| 16 | 4 MAN BLACK OPTION | GREEN |
-| 17 | 4 MAN BLACK OPTION | ORANGE |
+The app opens on **THIS WEEK** (✓ below) — the calls being run this week. Prev /
+next, dots and swipe stay inside that deck. Everything is still in the call list
+under **ALL CALLS**; picking one from there switches to the full deck. Which
+calls are in this week is `week:true` on the move.
+
+| # | Call | Finish | This week |
+|---|---|---|---|
+| | **Five man** | | |
+| 1 | RED | ORANGE | ✓ |
+| 2 | YELLOW | GREEN | ✓ |
+| 3 | YELLOW | ORANGE | ✓ |
+| 4 | BLACK | GREEN | ✓ |
+| 5 | RED BOUNCE YELLOW | GREEN | ✓ |
+| 6 | RED BOUNCE YELLOW | ORANGE | ✓ |
+| 7 | YELLOW BOUNCE RED | GREEN | |
+| 8 | YELLOW BOUNCE RED | ORANGE | |
+| 9 | BLACK OPTION | GREEN | |
+| 10 | BLACK OPTION | ORANGE | |
+| 11 | KIWI FULL | GREEN | ✓ |
+| 12 | KIWI YELLOW | GREEN | ✓ |
+| 13 | KIWI YELLOW | ORANGE | ✓ |
+| 14 | KIWI RED | ORANGE | ✓ |
+| | **Four man** | | |
+| 15 | 4 MAN YELLOW 1 | GREEN | |
+| 16 | 4 MAN YELLOW 1 | ORANGE | |
+| 17 | 4 MAN YELLOW 2 | GREEN | |
+| 18 | 4 MAN YELLOW 2 | ORANGE | |
+| 19 | 4 MAN BLACK OPTION | GREEN | |
+| 20 | 4 MAN BLACK OPTION | ORANGE | |
 
 ---
 
@@ -154,17 +174,17 @@ man.
 |---|---|---|---|---|
 | RED | 1 · 2 · 3 | **4** | **5** | +1 |
 | YELLOW | 2 · 3 · 4 | **1** | **5** | +1 |
-| RED BOUNCE YELLOW | 1 · 2 · 4 | **5** — leaves early | **3** | +1 |
+| RED BOUNCE YELLOW | 1 · 4 · 5 | **2** | **3** — round behind the pod | +1 |
 | YELLOW BOUNCE RED | 1 · 3 · 4 | **2** | **5** | +1 |
 | BLACK OPTION | +1 · 4 · 5 | **2** | **3** | 1 |
+| KIWI YELLOW | 1 · 3 · 4 | **2** — already out | **5** | +1 |
+| KIWI RED | 2 · 3 · 4 | **1** — already out | **5** | +1 |
 | 4 MAN YELLOW 1 | 1 · 2 · 3 | **thrower** | **4** | +1 |
 | 4 MAN YELLOW 2 | 2 · 3 · 4 | **thrower** | **1** | +1 |
 | 4 MAN BLACK OPTION | +1 · 3 · 4 | **thrower** | **2** | 1 |
 
-**Red bounce yellow is the only one where 5 makes the long trip.** He is
-uninvolved from the start, so he leaves early and gets to the top, near the
-throw line, to drive from that side; 3, who was in the dummy, can't leave that
-early so he joins at the bottom. On yellow bounce red the jump is already at the
+On red bounce yellow 2 and 3 are holding at RED, in front of the pod: 2 takes the
+top and 3 goes round behind the pod to the bottom. On yellow bounce red the jump is already at the
 front, so 5 simply joins at the bottom and 2 — out of the dummy — takes the top.
 
 ---
@@ -183,8 +203,10 @@ front, so 5 simply joins at the bottom and 2 — out of the dummy — takes the 
 | 7 | **Hold** | Freeze on the end picture. |
 
 Free men leave as the ball is thrown so they arrive as the jumper goes up — then
-connect and drive as a unit. The early runner on red bounce yellow leaves in
-phase 2.
+connect and drive as a unit. A man who has to go round the pod (3 on red bounce
+yellow) leaves a beat earlier.
+
+**Kiwi has no walk-in** — everyone starts set (see §9b), so phase 0 is skipped.
 
 ---
 
@@ -246,8 +268,22 @@ point of the move. No contest in v1.
 
 ## 9b. KIWI — five man
 
-The long one. Two dummies, a swap in the line, and a front-ball strike into the
-gap between the front man and the thrower.
+**Kiwi does not walk in.** Everyone starts in: **1 · 2 · 3 at RED**, **4 at
+BLACK**, **5 on the back line**. DYNAMIC / SPACES does nothing on a kiwi.
+
+Three versions:
+
+- **KIWI FULL** (green) — the whole thing, below.
+- **KIWI YELLOW** (green or orange) — the first part only: 1 · 2 · 3 dummy at
+  RED, 2 steps out, then **1 · 3 · 4 go for real at YELLOW**, 3 jumps. Green:
+  down to 9, out to +1. Orange: 2 (already out) takes the top, 5 the bottom, +1
+  the ball.
+- **KIWI RED** (orange only) — the full sequence through both dummies and the
+  swap, then the 2 · 3 · 4 pod lifts at RED and **drives**. 1 (already out)
+  takes the top, 5 the bottom, +1 the ball.
+
+KIWI FULL — the long one. Two dummies, a swap in the line, and a front-ball
+strike into the gap between the front man and the thrower.
 
 1. **1 · 2 · 3 dummy at the front** (RED). 2 shows.
 2. **2 steps out** of the line to the left.
@@ -263,7 +299,7 @@ The opposition follow both dummies — they group at RED, shift to YELLOW, and a
 left there when the ball goes to the front. That's the whole point of the call
 and the animation makes it obvious.
 
-No orange variant is defined. If you want one it's a data change.
+The orange version of this is KIWI RED.
 
 ---
 
@@ -273,15 +309,17 @@ Single HTML file, portrait, SVG, no dependencies, no browser storage. Works
 offline and can be added to the home screen.
 
 - **&#8249; and &#8250; buttons** either side of the call name — previous / next call.
-- **Tap the call name** — opens the full list, grouped into five-man and
-  four-man, pick any one directly.
-- **Dots** under the title are tappable and show position in the deck.
+- **Tap the call name** — opens the list: THIS WEEK first, then **ALL CALLS**
+  (tap to expand), grouped into five-man and four-man. Pick any one directly.
+- **Dots** under the title are tappable and show position in the current deck
+  (this week, or all calls).
 - **Swipe left / right** on the pitch also changes call (mouse drag works too).
 - **Tap the pitch** — pause / play. **Swipe up** or **NOTES** — coaching points.
 - **REPLAY**, **1× / 0.5×**, **FLIP ⇅**, **DYNAMIC / SPACES**.
 - **Scrub bar** with the phases as ticks — drag to freeze on any phase.
-- **Deep links** for sharing a particular view: `#top`, `#spaces`, `#7`, or
-  combined — `lineout.html#top,spaces,7`.
+- **Deep links** for sharing a particular view: `#top`, `#spaces`, `#all`, `#7`,
+  or combined — `lineout.html#top,spaces,7`. A call number outside this week
+  opens the full deck.
 
 Reading the picture: teal disc, scaled up, is the jumper; teal ring is a lifter;
 grey is a man who has stepped out of the line; hollow discs are the opposition;
@@ -299,14 +337,12 @@ buildTimeline(roles, finish) -> Actor[]   // {t, x, y, scale} keyframes
 ```
 
 Timelines are built in model space; orientation is applied at draw time by
-`Y()`. Seventeen data objects, one renderer, one clock. A new call is a data
+`Y()`. Twenty data objects, one renderer, one clock. A new call is a data
 change, not a code change.
 
 ---
 
 ## 12. Parked
 
-- **The bounce with the back lifter involved.** You flagged you're sure one
-  exists. Not built — when you've worked it out it's a few lines of data.
 - Opposition contesting / counter-jumping.
 - Left-hand lineouts (attacking left) — the same flip trick would cover it.
